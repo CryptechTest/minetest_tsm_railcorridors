@@ -55,21 +55,53 @@ end
 -- Random chest items
 -- Zufälliger Kisteninhalt
 function rci()
-	if nextrandom(0,1) < 0.03 then
-		return "farming:bread "..nextrandom(1,3)
-	elseif nextrandom(0,1) < 0.05 then
-		if nextrandom(0,1) < 0.5 then
-			return "farming:seed_cotton "..nextrandom(1,5)
-		else
-			return "farming:seed_wheat "..nextrandom(1,5)
+	if(minetest.get_modpath("treasurer") ~= nil) then
+		local treasures
+		if nextrandom(0,1) < 0.03 then
+			treasures = treasurer.select_random_treasures(1,2,4)
+		elseif nextrandom(0,1) < 0.05 then
+			if nextrandom(0,1) < 0.5 then
+				treasures = treasurer.select_random_treasures(1,2,4,"seed")
+			else
+				treasures = treasurer.select_random_treasures(1,2,4,"seed")
+			end
+		elseif nextrandom(0,1) < 0.005 then
+			return "tnt:tnt "..nextrandom(1,3)
+		elseif nextrandom(0,1) < 0.003 then
+			if nextrandom(0,1) < 0.8 then
+				treasures = treasurer.select_random_treasures(1,3,6,"mineral")
+			else
+				treasures = treasurer.select_random_treasures(1,5,9,"mineral")
+			end
 		end
-	elseif nextrandom(0,1) < 0.005 then
-		return "tnt:tnt "..nextrandom(1,3)
-	elseif nextrandom(0,1) < 0.003 then
-		if nextrandom(0,1) < 0.8 then
-			return "default:mese_crystal "..nextrandom(1,3)
+
+		if(treasures ~= nil) then
+			if(#treasures==1) then
+				return treasures[1]:get_name()
+			else
+				return ""
+			end
 		else
-			return "default:diamond "..nextrandom(1,3)
+			return ""
+		end
+	else
+
+		if nextrandom(0,1) < 0.03 then
+			return "farming:bread "..nextrandom(1,3)
+		elseif nextrandom(0,1) < 0.05 then
+			if nextrandom(0,1) < 0.5 then
+				return "farming:seed_cotton "..nextrandom(1,5)
+			else
+				return "farming:seed_wheat "..nextrandom(1,5)
+			end
+		elseif nextrandom(0,1) < 0.005 then
+			return "tnt:tnt "..nextrandom(1,3)
+		elseif nextrandom(0,1) < 0.003 then
+			if nextrandom(0,1) < 0.8 then
+				return "default:mese_crystal "..nextrandom(1,3)
+			else
+				return "default:diamond "..nextrandom(1,3)
+			end
 		end
 	end
 end
