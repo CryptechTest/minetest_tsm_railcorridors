@@ -1,2 +1,4 @@
 default
+tnt
+farming
 treasurer?
