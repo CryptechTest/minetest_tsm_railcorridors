@@ -32,17 +32,17 @@ local probability_chest = 5/100
 local pr
 local pr_initialized = false
 
-function InitRandomizer(seeed)
+local function InitRandomizer(seeed)
 	pr = PseudoRandom(seeed)
 	pr_initialized = true
 end
-function nextrandom(min, max)
+local function nextrandom(min, max)
 	return pr:next() / 32767 * (max - min) + min
 end
 
 -- Würfel…
 -- Cube…
-function Cube(p, radius, node)
+local function Cube(p, radius, node)
 	for zi = p.z-radius, p.z+radius do
 		for yi = p.y-radius, p.y+radius do
 			for xi = p.x-radius, p.x+radius do
@@ -54,7 +54,7 @@ end
 
 -- Random chest items
 -- Zufälliger Kisteninhalt
-function rci()
+local function rci()
 	if(minetest.get_modpath("treasurer") ~= nil) then
 		local treasures
 		if nextrandom(0,1) < 0.03 then
@@ -106,7 +106,7 @@ function rci()
 	end
 end
 -- chests
-function Place_Chest(pos)
+local function Place_Chest(pos)
 	minetest.set_node(pos, {name="default:chest"})
 	local meta = minetest.get_meta(pos)
 	meta:set_string("formspec",
@@ -133,7 +133,7 @@ function Place_Chest(pos)
 		)
 	end
 	
-function WoodBulk(pos)
+local function WoodBulk(pos)
 	minetest.set_node({x=pos.x+1, y=pos.y, z=pos.z+1}, {name="default:wood"})
 	minetest.set_node({x=pos.x-1, y=pos.y, z=pos.z+1}, {name="default:wood"})
 	minetest.set_node({x=pos.x+1, y=pos.y, z=pos.z-1}, {name="default:wood"})
@@ -143,8 +143,7 @@ end
 -- Gänge mit Schienen
 -- Corridors with rails
 
-function corridor_part(start_point, segment_vector, segment_count)
-	local node
+local function corridor_part(start_point, segment_vector, segment_count)
 	local p = {x=start_point.x, y=start_point.y, z=start_point.z}
 	local torches = nextrandom(0, 1) < probability_torches_in_segment
 	local dir = {0, 0}
@@ -196,7 +195,7 @@ function corridor_part(start_point, segment_vector, segment_count)
 	--p = vector.subtract(p, segment_vector)
 end
 
-function corridor_func(waypoint, coord, sign, up_or_down, up)
+local function corridor_func(waypoint, coord, sign, up_or_down, up)
 	local segamount = 3
 	if up_or_down then
 		segamount = 1
@@ -275,7 +274,7 @@ function corridor_func(waypoint, coord, sign, up_or_down, up)
 	return {x=waypoint.x+corridor_vek.x, y=waypoint.y+corridor_vek.y, z=waypoint.z+corridor_vek.z}
 end
 
-function start_corridor(waypoint, coord, sign, length, psra)
+local function start_corridor(waypoint, coord, sign, length, psra)
 	local wp = waypoint
 	local c = coord
 	local s = sign
@@ -318,7 +317,7 @@ function start_corridor(waypoint, coord, sign, length, psra)
 	end
 end
 
-function place_corridors(main_cave_coords, psra)
+local function place_corridors(main_cave_coords, psra)
 	if nextrandom(0, 1) < 0.5 then	
 		Cube(main_cave_coords, 4, {name="default:dirt"})
 		Cube(main_cave_coords, 3, {name="air"})
