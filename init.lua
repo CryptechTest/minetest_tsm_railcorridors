@@ -109,29 +109,11 @@ end
 local function Place_Chest(pos)
 	minetest.set_node(pos, {name="default:chest"})
 	local meta = minetest.get_meta(pos)
-	meta:set_string("formspec",
-		"invsize[8,9;]"..
-		"list[context;main;0,0;8,4;]"..
-		"list[current_player;main;0,5;8,4;]")
-		meta:set_string("infotext", "Chest");
-		local inv = meta:get_inventory()
-		inv:set_size("main", 8*4)
-		--print(dump(meta:to_table()))
-		meta:from_table({
-			inventory = {
-				main = {
-					[1] = rci(),[2] = rci(),[3] = rci(),[4] = rci(),[5] = rci(),[6] = rci(),[7] = rci(),[8] = rci(),
-					[9] = rci(),[10] = rci(),[11] = rci(),[12] = rci(),[13] = rci(),[14] = rci(),[15] = rci(),[16] = rci(),
-					[17] = rci(),[18] = rci(),[19] = rci(),[20] = rci(),[21] = rci(),[22] = rci(),[23] = rci(),[24] = rci(),
-					[25] = rci(),[26] = rci(),[27] = rci(),[28] = rci(),[29] = rci(),[30] = rci(),[31] = rci(),[32] = rci()}
-				}, -- Why the f does the number of fields vary in the mod??
-				fields = {
-					formspec = "invsize[8,9;]list[context;main;0,0;8,4;]list[current_player;main;0,5;8,4;]",
-					infotext = "Chest"
-				}
-			}
-		)
+	local inv = meta:get_inventory()
+	for i=1,32 do
+		inv:set_stack("main", i, ItemStack(rci()))
 	end
+end
 	
 local function WoodBulk(pos)
 	minetest.set_node({x=pos.x+1, y=pos.y, z=pos.z+1}, {name="default:wood"})
