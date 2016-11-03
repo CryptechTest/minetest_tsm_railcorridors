@@ -1,29 +1,58 @@
 -- „Parameter“/„Settings“
+local setting
 
 -- Wahrscheinlichkeit für jeden Chunk, solche Gänge mit Schienen zu bekommen
 -- Probability for every newly generated chunk to get corridors
 local probability_railcaves_in_chunk = 1/3
+setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_railcaves_in_chunk"))
+if setting then
+	probability_railcaves_in_chunk = setting
+end
 
 -- Innerhalb welcher Parameter soll sich die Pfadlänge bewegen? (Forks heben den Maximalwert auf)
 -- Minimal and maximal value of path length (forks don't look up this value)
 local way_min = 4;
 local way_max = 7;
+setting = tonumber(minetest.setting_get("tsm_railcorridors_way_min"))
+if setting then
+	way_min = setting
+end
+setting = tonumber(minetest.setting_get("tsm_railcorridors_way_max"))
+if setting then
+	way_max = setting
+end
 
--- Wahrsch. für jeden geraden Teil eines Korridors, keine Fackeln zu bekommen
--- Probability for every horizontal part of a corridor to be without light
+-- Wahrsch. für jeden geraden Teil eines Korridors, Fackeln zu bekommen
+-- Probability for every horizontal part of a corridor to be with torches
 local probability_torches_in_segment = 0.5
+setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_torches_in_segment"))
+if setting then
+	probability_torches_in_segment = setting
+end
 
 -- Wahrsch. für jeden Teil eines Korridors, nach oben oder nach unten zu gehen
 -- Probability for every part of a corridor to go up or down
 local probability_up_or_down = 0.2
+setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_up_or_down"))
+if setting then
+	probability_up_or_down = setting
+end
 
 -- Wahrscheinlichkeit für jeden Teil eines Korridors, sich zu verzweigen – vorsicht, wenn fast jeder Gang sich verzweigt, kann der Algorithums unlösbar werden und MT hängt sich auf
 -- Probability for every part of a corridor to fork – caution, too high values may cause MT to hang on.
 local propability_fork = 0.04
+setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_fork"))
+if setting then
+	probability_fork = setting
+end
 
 -- Wahrscheinlichkeit für jeden geraden Teil eines Korridors eine Kiste zu enthalten
 -- Probability for every part of a corridor to contain a chest
 local probability_chest = 5/100
+setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_chest"))
+if setting then
+	probability_chest = setting
+end
 
 -- Parameter Ende
 
