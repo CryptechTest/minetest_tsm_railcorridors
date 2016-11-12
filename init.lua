@@ -105,7 +105,7 @@ local function rci()
 		end
 
 		if(treasures ~= nil) then
-			if(#treasures==1) then
+			if(#treasures>=1) then
 				return treasures[1]:get_name()
 			else
 				return ""
@@ -131,6 +131,8 @@ local function rci()
 			else
 				return "default:diamond "..nextrandom(1,3)
 			end
+		else
+			return ""
 		end
 	end
 end
