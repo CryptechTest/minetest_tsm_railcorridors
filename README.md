@@ -2,8 +2,10 @@
 
 * Current version 0.7.3
 
-Minetest mod for adding caves with rails and wood constructions similar to Minecraft.
+Minetest mod for adding corridors with rails and wood constructions similar to Minecraft.
+If the Treasurer mod is installed, chests with some random cheap stuff sometimes appear.
 
-Forum thread: https://forum.minetest.net/viewtopic.php?t=10339
+Use the advanced settings to finetune the railway corridors.
 
-License is MIT License.
+* Forum thread: https://forum.minetest.net/viewtopic.php?t=10339
+* License: MIT License.
