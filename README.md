@@ -2,8 +2,9 @@
 
 * Current version 0.8.0
 
-Minetest mod for adding corridors with rails and wood constructions similar to Minecraft.
-If the Treasurer mod is installed, chests with some random cheap stuff sometimes appear.
+Minetest mod for adding underground corridors with rails and wood constructions with
+a few treasure chests now and then. Optional Treasurer support is available for adding
+treasures from various mods.
 
 Use the advanced settings to finetune the railway corridors.
 
