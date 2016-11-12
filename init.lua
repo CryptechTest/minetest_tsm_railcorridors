@@ -205,7 +205,7 @@ local function corridor_part(start_point, segment_vector, segment_count)
 					walltorchtype = "default:torch"
 				end
 				minetest.set_node({x=calc[5], y=p.y+1, z=calc[6]}, {name=walltorchtype, param2=torchdir[1]})
-				minetest.set_node({x=calc[7], y=p.y+1, z=calc[8]}, {name=torchtype, param2=torchdir[2]})
+				minetest.set_node({x=calc[7], y=p.y+1, z=calc[8]}, {name=walltorchtype, param2=torchdir[2]})
 			end
 			
 		end
