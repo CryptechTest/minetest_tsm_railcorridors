@@ -195,8 +195,17 @@ local function corridor_part(start_point, segment_vector, segment_count)
 				minetest.set_node({x=calc[3], y=p.y-2, z=calc[4]}, node_fence)
 			end
 			if torches then
-				minetest.set_node({x=calc[5], y=p.y+1, z=calc[6]}, {name="default:torch", param2=torchdir[1]})
-				minetest.set_node({x=calc[7], y=p.y+1, z=calc[8]}, {name="default:torch", param2=torchdir[2]})
+				-- Place torches at horizontal sides
+				local walltorchtype
+				if minetest.get_modpath("torches") then
+					--[[ This is compability code with the torches mod, which overwrites the way how torches work.
+					This is needed so that torches are drawn properly. ]]
+					walltorchtype = "default:torch_wall"
+				else
+					walltorchtype = "default:torch"
+				end
+				minetest.set_node({x=calc[5], y=p.y+1, z=calc[6]}, {name=walltorchtype, param2=torchdir[1]})
+				minetest.set_node({x=calc[7], y=p.y+1, z=calc[8]}, {name=torchtype, param2=torchdir[2]})
 			end
 			
 		end
