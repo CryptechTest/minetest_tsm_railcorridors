@@ -1,6 +1,6 @@
 # Railway corridors for Treasurer [`tsm_railcorridors`]
 
-* Current version 0.7.3
+* Current version 0.8.0
 
 Minetest mod for adding corridors with rails and wood constructions similar to Minecraft.
 If the Treasurer mod is installed, chests with some random cheap stuff sometimes appear.
