@@ -69,13 +69,20 @@ local function nextrandom(min, max)
 	return pr:next() / 32767 * (max - min) + min
 end
 
+-- Checks if the mapgen is allowed to carve through this structure
+local function CanBuild(pos)
+	return minetest.registered_nodes[minetest.get_node(pos).name].is_ground_content
+end
+
 -- Würfel…
 -- Cube…
 local function Cube(p, radius, node)
 	for zi = p.z-radius, p.z+radius do
 		for yi = p.y-radius, p.y+radius do
 			for xi = p.x-radius, p.x+radius do
-				minetest.set_node({x=xi,y=yi,z=zi}, node)
+				if CanBuild({x=xi,y=yi,z=zi}) then
+					minetest.set_node({x=xi,y=yi,z=zi}, node)
+				end
 			end
 		end
 	end
