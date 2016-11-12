@@ -40,7 +40,7 @@ end
 
 -- Wahrscheinlichkeit für jeden Teil eines Korridors, sich zu verzweigen – vorsicht, wenn fast jeder Gang sich verzweigt, kann der Algorithums unlösbar werden und MT hängt sich auf
 -- Probability for every part of a corridor to fork – caution, too high values may cause MT to hang on.
-local propability_fork = 0.04
+local probability_fork = 0.04
 setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_fork"))
 if setting then
 	probability_fork = setting
@@ -304,7 +304,7 @@ local function start_corridor(waypoint, coord, sign, length, psra)
 		wp = corridor_func(wp,c,s, ud, up)
 		-- Verzweigung?
 		-- Fork?
-		if nextrandom(0, 1) < propability_fork then
+		if nextrandom(0, 1) < probability_fork then
 			local p = {x=wp.x, y=wp.y, z=wp.z}
 			start_corridor(wp, c, s, nextrandom(way_min,way_max), psra)
 			if c == "x" then c="z" else c="x" end

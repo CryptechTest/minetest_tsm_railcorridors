@@ -15,7 +15,7 @@ tsm_railcorridors_probability_up_or_down (Stairway probability) float 0.2 0.0 1.
 
 #Probability for every part of a rail corridor to fork.
 #Caution! Too high values may cause Minetest to hang.
-tsm_railcorridors_propability_fork (Fork probability) float 0.04 0.0 1.0
+tsm_railcorridors_probability_fork (Fork probability) float 0.04 0.0 1.0
 
 #Probability for every part of a rail corridor to contain a treasure chest.
 tsm_railcorridors_probability_chest (Chest probability) float 0.05 0.0 1.0
