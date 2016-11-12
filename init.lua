@@ -205,7 +205,6 @@ local function corridor_part(start_point, segment_vector, segment_count)
 		-- next way point
 		p = vector.add(p, segment_vector)
 	end
-	--p = vector.subtract(p, segment_vector)
 end
 
 local function corridor_func(waypoint, coord, sign, up_or_down, up)
@@ -312,7 +311,6 @@ local function start_corridor(waypoint, coord, sign, length, psra)
 			if c == "x" then c="z" else c="x" end
 			start_corridor(wp, c, s, nextrandom(way_min,way_max), psra)
 			start_corridor(wp, c, not s, nextrandom(way_min,way_max), psra)
-			--minetest.set_node({x=p.x, y=p.y, z=p.z}, {name="default:torch"})
 			WoodBulk({x=p.x, y=p.y-1, z=p.z})
 			WoodBulk({x=p.x, y=p.y,   z=p.z})
 			WoodBulk({x=p.x, y=p.y+1, z=p.z})
