@@ -1,12 +1,9 @@
-RailCaves
-=========
-Current Version 0.7.3
+# Railway corridors for Treasurer [`tsm_railcorridors`]
 
-Minetest Mod for adding caves with rails and wood constructions similar to Minecraft.
+* Current version 0.7.3
 
-Screenshots and information:
-https://forum.minetest.net/viewtopic.php?f=9&t=10225
+Minetest mod for adding caves with rails and wood constructions similar to Minecraft.
 
-License is WTFPL. You just do what the fuck you want to.
+Forum thread: https://forum.minetest.net/viewtopic.php?t=10339
 
-You can install this mod by putting the directory "RailCorridors" (maybe better lower case) into the "mods" subfolder of your minetest folder.
+License is MIT License.
