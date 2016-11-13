@@ -68,6 +68,9 @@ end
 local function nextrandom(min, max)
 	return pr:next() / 32767 * (max - min) + min
 end
+local function nextrandom_int(min, max)
+	return pr:next(min, max)
+end
 
 -- Checks if the mapgen is allowed to carve through this structure
 local function CanBuild(pos)
@@ -173,23 +176,23 @@ local function Place_Chest(pos)
 	end
 end
 	
-local function WoodBulk(pos)
-	minetest.set_node({x=pos.x+1, y=pos.y, z=pos.z+1}, {name="default:wood"})
-	minetest.set_node({x=pos.x-1, y=pos.y, z=pos.z+1}, {name="default:wood"})
-	minetest.set_node({x=pos.x+1, y=pos.y, z=pos.z-1}, {name="default:wood"})
-	minetest.set_node({x=pos.x-1, y=pos.y, z=pos.z-1}, {name="default:wood"})
+local function WoodBulk(pos, wood)
+	minetest.set_node({x=pos.x+1, y=pos.y, z=pos.z+1}, {name=wood})
+	minetest.set_node({x=pos.x-1, y=pos.y, z=pos.z+1}, {name=wood})
+	minetest.set_node({x=pos.x+1, y=pos.y, z=pos.z-1}, {name=wood})
+	minetest.set_node({x=pos.x-1, y=pos.y, z=pos.z-1}, {name=wood})
 end
 
 -- Gänge mit Schienen
 -- Corridors with rails
 
-local function corridor_part(start_point, segment_vector, segment_count)
+local function corridor_part(start_point, segment_vector, segment_count, wood, post)
 	local p = {x=start_point.x, y=start_point.y, z=start_point.z}
 	local torches = nextrandom(0, 1) < probability_torches_in_segment
 	local dir = {0, 0}
 	local torchdir = {1, 1}
-	local node_wood = {name="default:wood"}
-	local node_fence = {name="default:fence_wood"}
+	local node_wood = {name=wood}
+	local node_fence = {name=post}
 	if segment_vector.x == 0 and segment_vector.z ~= 0 then
 		dir = {1, 0}
 		torchdir = {5, 4}
@@ -246,7 +249,7 @@ local function corridor_part(start_point, segment_vector, segment_count)
 	end
 end
 
-local function corridor_func(waypoint, coord, sign, up_or_down, up)
+local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post)
 	local segamount = 3
 	if up_or_down then
 		segamount = 1
@@ -268,7 +271,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up)
 		end
 	end
 	local segcount = pr:next(4,6)
-	corridor_part(waypoint, vek, segcount)
+	corridor_part(waypoint, vek, segcount, wood, post)
 	local corridor_vek = {x=vek.x*segcount, y=vek.y*segcount, z=vek.z*segcount}
 
 	-- nachträglich Schienen legen
@@ -313,7 +316,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up)
 				minetest.set_node(p, {name = "default:rail"})
 			end
 			if i == chestplace then
-				if minetest.get_node({x=p.x+vek.z,y=p.y-1,z=p.z-vek.x}).name == "default:fence_wood" then
+				if minetest.get_node({x=p.x+vek.z,y=p.y-1,z=p.z-vek.x}).name == post then
 					chestplace = chestplace + 1
 				else
 					Place_Chest({x=p.x+vek.z,y=p.y,z=p.z-vek.x})
@@ -325,7 +328,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up)
 	return {x=waypoint.x+corridor_vek.x, y=waypoint.y+corridor_vek.y, z=waypoint.z+corridor_vek.z}
 end
 
-local function start_corridor(waypoint, coord, sign, length, psra)
+local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
 	local wp = waypoint
 	local c = coord
 	local s = sign
@@ -341,19 +344,19 @@ local function start_corridor(waypoint, coord, sign, length, psra)
 			 ud = false
 		end
 		-- Make corridor / Korridor graben
-		wp = corridor_func(wp,c,s, ud, up)
+		wp = corridor_func(wp,c,s, ud, up, wood, post)
 		-- Verzweigung?
 		-- Fork?
 		if nextrandom(0, 1) < probability_fork then
 			local p = {x=wp.x, y=wp.y, z=wp.z}
-			start_corridor(wp, c, s, nextrandom(way_min,way_max), psra)
+			start_corridor(wp, c, s, nextrandom(way_min,way_max), psra, wood, post)
 			if c == "x" then c="z" else c="x" end
-			start_corridor(wp, c, s, nextrandom(way_min,way_max), psra)
-			start_corridor(wp, c, not s, nextrandom(way_min,way_max), psra)
-			WoodBulk({x=p.x, y=p.y-1, z=p.z})
-			WoodBulk({x=p.x, y=p.y,   z=p.z})
-			WoodBulk({x=p.x, y=p.y+1, z=p.z})
-			WoodBulk({x=p.x, y=p.y+2, z=p.z})
+			start_corridor(wp, c, s, nextrandom(way_min,way_max), psra, wood, post)
+			start_corridor(wp, c, not s, nextrandom(way_min,way_max), psra, wood, post)
+			WoodBulk({x=p.x, y=p.y-1, z=p.z}, wood)
+			WoodBulk({x=p.x, y=p.y,   z=p.z}, wood)
+			WoodBulk({x=p.x, y=p.y+1, z=p.z}, wood)
+			WoodBulk({x=p.x, y=p.y+2, z=p.z}, wood)
 			return
 		end
 		-- coord und sign verändern
@@ -367,6 +370,14 @@ local function start_corridor(waypoint, coord, sign, length, psra)
 	end
 end
 
+local corridor_woods = {
+	wood = { wood = "default:wood", post = "default:fence_wood"},
+	jungle = { wood = "default:junglewood", post = "default:fence_junglewood"},
+	acacia = { wood = "default:acacia_wood", post = "default:fence_acacia_wood"},
+	pine = { wood = "default:pine_wood", post = "default:fence_pine_wood"},
+	aspen = { wood = "default:aspen_wood", post = "default:fence_aspen_wood"},
+}
+
 local function place_corridors(main_cave_coords, psra)
 	if nextrandom(0, 1) < 0.5 then	
 		Cube(main_cave_coords, 4, {name="default:dirt"})
@@ -378,15 +389,38 @@ local function place_corridors(main_cave_coords, psra)
 	end
 	local xs = nextrandom(0, 2) < 1
 	local zs = nextrandom(0, 2) < 1;
-	start_corridor(main_cave_coords, "x", xs, nextrandom(way_min,way_max), psra)
-	start_corridor(main_cave_coords, "z", zs, nextrandom(way_min,way_max), psra)
+
+	-- Select random wood type, but with bias towards default wood
+	local rnd = pr:next()
+
+	local woodtype
+	-- Wood: 88%
+	if rnd < 28835  then
+		woodtype = "wood"
+	-- Jungle: 7%
+	elseif rnd < 31139 then
+		woodtype = "jungle"
+	-- Acacia: 4.5%
+	elseif rnd < 32603 then
+		woodtype = "acacia"
+	-- Pine: 0.25%
+	elseif rnd < 32685 then
+		woodtype = "pine"
+	-- Aspen: 0.25%
+	else
+		woodtype = "aspen"
+	end
+	local wood = corridor_woods[woodtype].wood
+	local post = corridor_woods[woodtype].post
+	start_corridor(main_cave_coords, "x", xs, nextrandom(way_min,way_max), psra, wood, post)
+	start_corridor(main_cave_coords, "z", zs, nextrandom(way_min,way_max), psra, wood, post)
 	-- Auch mal die andere Richtung?
 	-- Try the other direction?
 	if nextrandom(0, 1) < 0.7 then
-		start_corridor(main_cave_coords, "x", not xs, nextrandom(way_min,way_max), psra)
+		start_corridor(main_cave_coords, "x", not xs, nextrandom(way_min,way_max), psra, wood, post)
 	end
 	if nextrandom(0, 1) < 0.7 then
-		start_corridor(main_cave_coords, "z", not zs, nextrandom(way_min,way_max), psra)
+		start_corridor(main_cave_coords, "z", not zs, nextrandom(way_min,way_max), psra, wood, post)
 	end
 end
 
