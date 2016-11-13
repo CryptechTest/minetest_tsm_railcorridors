@@ -72,9 +72,15 @@ local function nextrandom_int(min, max)
 	return pr:next(min, max)
 end
 
--- Checks if the mapgen is allowed to carve through this structure
-local function CanBuild(pos)
-	return minetest.registered_nodes[minetest.get_node(pos).name].is_ground_content
+-- Checks if the mapgen is allowed to carve through this structure and only sets
+-- the node if it is allowed.
+local function SetNodeIfCanBuild(pos, node)
+	if minetest.registered_nodes[minetest.get_node(pos).name].is_ground_content then
+		minetest.set_node(pos, node)
+		return true
+	else
+		return false
+	end
 end
 
 -- Checks if the node is empty space which requires to be filled by a platform
@@ -93,9 +99,7 @@ local function Cube(p, radius, node)
 	for zi = p.z-radius, p.z+radius do
 		for yi = p.y-radius, p.y+radius do
 			for xi = p.x-radius, p.x+radius do
-				if CanBuild({x=xi,y=yi,z=zi}) then
-					minetest.set_node({x=xi,y=yi,z=zi}, node)
-				end
+				SetNodeIfCanBuild({x=xi,y=yi,z=zi}, node)
 			end
 		end
 	end
@@ -168,19 +172,20 @@ local function rci()
 end
 -- chests
 local function Place_Chest(pos)
-	minetest.set_node(pos, {name="default:chest"})
-	local meta = minetest.get_meta(pos)
-	local inv = meta:get_inventory()
-	for i=1,32 do
-		inv:set_stack("main", i, ItemStack(rci()))
+	if SetNodeIfCanBuild(pos, {name="default:chest"}) then
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		for i=1,32 do
+			inv:set_stack("main", i, ItemStack(rci()))
+		end
 	end
 end
 	
 local function WoodBulk(pos, wood)
-	minetest.set_node({x=pos.x+1, y=pos.y, z=pos.z+1}, {name=wood})
-	minetest.set_node({x=pos.x-1, y=pos.y, z=pos.z+1}, {name=wood})
-	minetest.set_node({x=pos.x+1, y=pos.y, z=pos.z-1}, {name=wood})
-	minetest.set_node({x=pos.x-1, y=pos.y, z=pos.z-1}, {name=wood})
+	SetNodeIfCanBuild({x=pos.x+1, y=pos.y, z=pos.z+1}, {name=wood})
+	SetNodeIfCanBuild({x=pos.x-1, y=pos.y, z=pos.z+1}, {name=wood})
+	SetNodeIfCanBuild({x=pos.x+1, y=pos.y, z=pos.z-1}, {name=wood})
+	SetNodeIfCanBuild({x=pos.x-1, y=pos.y, z=pos.z-1}, {name=wood})
 end
 
 -- Gänge mit Schienen
@@ -215,20 +220,43 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 				p.x+dir[2], p.z+dir[1], -- orthogonal
 				p.x-dir[2], p.z-dir[1], -- orthogonal, the other way
 			}
-			minetest.set_node({x=p.x, y=p.y+1, z=p.z}, node_wood)
-			minetest.set_node({x=calc[1], y=p.y+1, z=calc[2]}, node_wood)
-			minetest.set_node({x=calc[1], y=p.y  , z=calc[2]}, node_fence)
-			minetest.set_node({x=calc[1], y=p.y-1, z=calc[2]}, node_fence)
+			--[[ Shape:
+				WWW
+				P.P
+				PrP
+				pfp
+			W = wood
+			P = post (above floor level)
+			p = post (in floor level, only placed if no floor)
 			
-			minetest.set_node({x=calc[3], y=p.y+1, z=calc[4]}, node_wood)
-			minetest.set_node({x=calc[3], y=p.y  , z=calc[4]}, node_fence)
-			minetest.set_node({x=calc[3], y=p.y-1, z=calc[4]}, node_fence)
+			From previous generation (for reference):
+			f = floor
+			r = rail
+			. = air
+			]]
+
+			-- Left post and planks
+			local left_ok = true
+			left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y-1, z=calc[2]}, node_fence)
+			if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y  , z=calc[2]}, node_fence) end
+			if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y+1, z=calc[2]}, node_wood) end
+
+			-- Right post and planks
+			local right_ok = true
+			right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y-1, z=calc[4]}, node_fence)
+			if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y  , z=calc[4]}, node_fence) end
+			if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y+1, z=calc[4]}, node_wood) end
+
+			-- Middle planks
+			local top_planks_ok = false
+			if left_ok and right_ok then top_planks_ok = SetNodeIfCanBuild({x=p.x, y=p.y+1, z=p.z}, node_wood) end
 			
 			if minetest.get_node({x=p.x,y=p.y-2,z=p.z}).name=="air" then
-				minetest.set_node({x=calc[1], y=p.y-2, z=calc[2]}, node_fence)
-				minetest.set_node({x=calc[3], y=p.y-2, z=calc[4]}, node_fence)
+				if left_ok then SetNodeIfCanBuild({x=calc[1], y=p.y-2, z=calc[2]}, node_fence) end
+				if right_ok then SetNodeIfCanBuild({x=calc[3], y=p.y-2, z=calc[4]}, node_fence) end
 			end
-			if torches then
+			-- Torches on the middle planks
+			if torches and top_planks_ok then
 				-- Place torches at horizontal sides
 				local walltorchtype
 				if minetest.get_modpath("torches") then
@@ -238,8 +266,8 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 				else
 					walltorchtype = "default:torch"
 				end
-				minetest.set_node({x=calc[5], y=p.y+1, z=calc[6]}, {name=walltorchtype, param2=torchdir[1]})
-				minetest.set_node({x=calc[7], y=p.y+1, z=calc[8]}, {name=walltorchtype, param2=torchdir[2]})
+				SetNodeIfCanBuild({x=calc[5], y=p.y+1, z=calc[6]}, {name=walltorchtype, param2=torchdir[1]})
+				SetNodeIfCanBuild({x=calc[7], y=p.y+1, z=calc[8]}, {name=walltorchtype, param2=torchdir[2]})
 			end
 		end
 		
@@ -313,7 +341,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post)
 				p.y = p.y - 1;
 			end
 			if minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name ~="default:rail" then
-				minetest.set_node(p, {name = "default:rail"})
+				SetNodeIfCanBuild(p, {name = "default:rail"})
 			end
 			if i == chestplace then
 				if minetest.get_node({x=p.x+vek.z,y=p.y-1,z=p.z-vek.x}).name == post then
