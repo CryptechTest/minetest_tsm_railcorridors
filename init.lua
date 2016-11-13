@@ -235,39 +235,57 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 			. = air
 			]]
 
-			-- Left post and planks
-			local left_ok = true
-			left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y-1, z=calc[2]}, node_fence)
-			if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y  , z=calc[2]}, node_fence) end
-			if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y+1, z=calc[2]}, node_wood) end
+			-- Don't place those wood structs below open air
+			if not (minetest.get_node({x=calc[1], y=p.y+2, z=calc[2]}).name == "air" and
+				minetest.get_node({x=calc[3], y=p.y+2, z=calc[4]}).name == "air" and
+				minetest.get_node({x=p.x, y=p.y+2, z=p.z}).name == "air") then
 
-			-- Right post and planks
-			local right_ok = true
-			right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y-1, z=calc[4]}, node_fence)
-			if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y  , z=calc[4]}, node_fence) end
-			if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y+1, z=calc[4]}, node_wood) end
+				-- Left post and planks
+				local left_ok = true
+				left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y-1, z=calc[2]}, node_fence)
+				if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y  , z=calc[2]}, node_fence) end
+				if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y+1, z=calc[2]}, node_wood) end
 
-			-- Middle planks
-			local top_planks_ok = false
-			if left_ok and right_ok then top_planks_ok = SetNodeIfCanBuild({x=p.x, y=p.y+1, z=p.z}, node_wood) end
-			
-			if minetest.get_node({x=p.x,y=p.y-2,z=p.z}).name=="air" then
-				if left_ok then SetNodeIfCanBuild({x=calc[1], y=p.y-2, z=calc[2]}, node_fence) end
-				if right_ok then SetNodeIfCanBuild({x=calc[3], y=p.y-2, z=calc[4]}, node_fence) end
-			end
-			-- Torches on the middle planks
-			if torches and top_planks_ok then
-				-- Place torches at horizontal sides
-				local walltorchtype
-				if minetest.get_modpath("torches") then
-					--[[ This is compability code with the torches mod, which overwrites the way how torches work.
-					This is needed so that torches are drawn properly. ]]
-					walltorchtype = "default:torch_wall"
-				else
-					walltorchtype = "default:torch"
+				-- Right post and planks
+				local right_ok = true
+				right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y-1, z=calc[4]}, node_fence)
+				if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y  , z=calc[4]}, node_fence) end
+				if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y+1, z=calc[4]}, node_wood) end
+
+				-- Middle planks
+				local top_planks_ok = false
+				if left_ok and right_ok then top_planks_ok = SetNodeIfCanBuild({x=p.x, y=p.y+1, z=p.z}, node_wood) end
+
+				if minetest.get_node({x=p.x,y=p.y-2,z=p.z}).name=="air" then
+					if left_ok then SetNodeIfCanBuild({x=calc[1], y=p.y-2, z=calc[2]}, node_fence) end
+					if right_ok then SetNodeIfCanBuild({x=calc[3], y=p.y-2, z=calc[4]}, node_fence) end
 				end
-				SetNodeIfCanBuild({x=calc[5], y=p.y+1, z=calc[6]}, {name=walltorchtype, param2=torchdir[1]})
-				SetNodeIfCanBuild({x=calc[7], y=p.y+1, z=calc[8]}, {name=walltorchtype, param2=torchdir[2]})
+				-- Torches on the middle planks
+				if torches and top_planks_ok then
+					-- Place torches at horizontal sides
+					local walltorchtype
+					if minetest.get_modpath("torches") then
+						--[[ This is compability code with the torches mod, which overwrites the way how torches work.
+						This is needed so that torches are drawn properly. ]]
+						walltorchtype = "default:torch_wall"
+					else
+						walltorchtype = "default:torch"
+					end
+					SetNodeIfCanBuild({x=calc[5], y=p.y+1, z=calc[6]}, {name=walltorchtype, param2=torchdir[1]})
+					SetNodeIfCanBuild({x=calc[7], y=p.y+1, z=calc[8]}, {name=walltorchtype, param2=torchdir[2]})
+				end
+			elseif torches then
+				-- Try to build torches instead of the wood structs
+				local node = {name="default:torch", param2=minetest.dir_to_wallmounted({x=0,y=-1,z=0})}
+
+				-- Try two different height levels
+				if not SetNodeIfCanBuild({x=calc[1], y=p.y-2, z=calc[2]}, node) then
+					SetNodeIfCanBuild({x=calc[1], y=p.y-1, z=calc[2]}, node)
+				end
+				if not SetNodeIfCanBuild({x=calc[3], y=p.y-2, z=calc[4]}, node) then
+					SetNodeIfCanBuild({x=calc[3], y=p.y-1, z=calc[4]}, node)
+				end
+
 			end
 		end
 		
