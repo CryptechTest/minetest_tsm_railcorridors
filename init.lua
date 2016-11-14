@@ -339,7 +339,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post)
 		end
 	end
 	if not up_or_down then
-		segcount = segcount * 2.5
+		segcount = segcount * 3
 	end
 	local minuend = 1
 	if up_or_down then
