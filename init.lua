@@ -437,22 +437,22 @@ local function place_corridors(main_cave_coords, psra)
 	local zs = nextrandom(0, 2) < 1;
 
 	-- Select random wood type, but with bias towards default wood
-	local rnd = pr:next()
+	local rnd = pr:next(1,1000)
 
 	local woodtype
 	-- Wood: 88%
-	if rnd < 28835  then
+	if rnd <= 880 then
 		woodtype = "wood"
 	-- Jungle: 7%
-	elseif rnd < 31139 then
+	elseif rnd <= 950 then
 		woodtype = "jungle"
 	-- Acacia: 4.5%
-	elseif rnd < 32603 then
+	elseif rnd <= 995 then
 		woodtype = "acacia"
-	-- Pine: 0.25%
-	elseif rnd < 32685 then
+	-- Pine: 0.3%
+	elseif rnd <= 998 then
 		woodtype = "pine"
-	-- Aspen: 0.25%
+	-- Aspen: 0.2%
 	else
 		woodtype = "aspen"
 	end
