@@ -1,12 +1,18 @@
 -- „Parameter“/„Settings“
 local setting
 
+-- Probability function
+-- TODO: Check if this is correct
+local P = function (float)
+	return math.floor(32767 * float)
+end
+
 -- Wahrscheinlichkeit für jeden Chunk, solche Gänge mit Schienen zu bekommen
 -- Probability for every newly generated chunk to get corridors
-local probability_railcaves_in_chunk = 1/3
+local probability_railcaves_in_chunk = P(1/3)
 setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_railcaves_in_chunk"))
 if setting then
-	probability_railcaves_in_chunk = setting
+	probability_railcaves_in_chunk = P(setting)
 end
 
 -- Innerhalb welcher Parameter soll sich die Pfadlänge bewegen? (Forks heben den Maximalwert auf)
@@ -24,34 +30,34 @@ end
 
 -- Wahrsch. für jeden geraden Teil eines Korridors, Fackeln zu bekommen
 -- Probability for every horizontal part of a corridor to be with torches
-local probability_torches_in_segment = 0.5
+local probability_torches_in_segment = P(0.5)
 setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_torches_in_segment"))
 if setting then
-	probability_torches_in_segment = setting
+	probability_torches_in_segment = P(setting)
 end
 
 -- Wahrsch. für jeden Teil eines Korridors, nach oben oder nach unten zu gehen
 -- Probability for every part of a corridor to go up or down
-local probability_up_or_down = 0.2
+local probability_up_or_down = P(0.2)
 setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_up_or_down"))
 if setting then
-	probability_up_or_down = setting
+	probability_up_or_down = P(setting)
 end
 
 -- Wahrscheinlichkeit für jeden Teil eines Korridors, sich zu verzweigen – vorsicht, wenn fast jeder Gang sich verzweigt, kann der Algorithums unlösbar werden und MT hängt sich auf
 -- Probability for every part of a corridor to fork – caution, too high values may cause MT to hang on.
-local probability_fork = 0.04
+local probability_fork = P(0.04)
 setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_fork"))
 if setting then
-	probability_fork = setting
+	probability_fork = P(setting)
 end
 
 -- Wahrscheinlichkeit für jeden geraden Teil eines Korridors eine Kiste zu enthalten
 -- Probability for every part of a corridor to contain a chest
-local probability_chest = 5/100
+local probability_chest = P(0.05)
 setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_chest"))
 if setting then
-	probability_chest = setting
+	probability_chest = P(setting)
 end
 
 -- Parameter Ende
@@ -64,12 +70,6 @@ local pr_initialized = false
 local function InitRandomizer(seeed)
 	pr = PseudoRandom(seeed)
 	pr_initialized = true
-end
-local function nextrandom(min, max)
-	return pr:next() / 32767 * (max - min) + min
-end
-local function nextrandom_int(min, max)
-	return pr:next(min, max)
 end
 
 -- Checks if the mapgen is allowed to carve through this structure and only sets
@@ -120,18 +120,18 @@ end
 local function rci()
 	if(minetest.get_modpath("treasurer") ~= nil) then
 		local treasures
-		if nextrandom(0,1) < 0.03 then
+		if pr:next(0,100) < 3 then
 			treasures = treasurer.select_random_treasures(1,2,4)
-		elseif nextrandom(0,1) < 0.05 then
-			if nextrandom(0,1) < 0.5 then
+		elseif pr:next(0,100) < 5 then
+			if pr:next(0,100) < 50 then
 				treasures = treasurer.select_random_treasures(1,2,4,"seed")
 			else
 				treasures = treasurer.select_random_treasures(1,2,4,"seed")
 			end
-		elseif nextrandom(0,1) < 0.005 then
-			return "tnt:tnt "..nextrandom(1,3)
-		elseif nextrandom(0,1) < 0.003 then
-			if nextrandom(0,1) < 0.8 then
+		elseif pr:next(0,1000) < 5 then
+			return "tnt:tnt "..pr:next(1,3)
+		elseif pr:next(0,1000) < 3 then
+			if pr:next(0,1000) < 800 then
 				treasures = treasurer.select_random_treasures(1,3,6,"mineral")
 			else
 				treasures = treasurer.select_random_treasures(1,5,9,"mineral")
@@ -149,21 +149,21 @@ local function rci()
 		end
 	else
 
-		if nextrandom(0,1) < 0.03 then
-			return "farming:bread "..nextrandom(1,3)
-		elseif nextrandom(0,1) < 0.05 then
-			if nextrandom(0,1) < 0.5 then
-				return "farming:seed_cotton "..nextrandom(1,5)
+		if pr:next(0,100) < 3 then
+			return "farming:bread "..pr:next(1,3)
+		elseif pr:next(0,100) < 5 then
+			if pr:next(0,100) < 50 then
+				return "farming:seed_cotton "..pr:next(1,5)
 			else
-				return "farming:seed_wheat "..nextrandom(1,5)
+				return "farming:seed_wheat "..pr:next(1,5)
 			end
-		elseif nextrandom(0,1) < 0.005 then
-			return "tnt:tnt "..nextrandom(1,3)
-		elseif nextrandom(0,1) < 0.003 then
-			if nextrandom(0,1) < 0.8 then
-				return "default:mese_crystal "..nextrandom(1,3)
+		elseif pr:next(0,1000) < 5 then
+			return "tnt:tnt "..pr:next(1,3)
+		elseif pr:next(0,1000) < 3 then
+			if pr:next(0,1000) < 800 then
+				return "default:mese_crystal "..pr:next(1,3)
 			else
-				return "default:diamond "..nextrandom(1,3)
+				return "default:diamond "..pr:next(1,3)
 			end
 		else
 			return ""
@@ -193,7 +193,7 @@ end
 
 local function corridor_part(start_point, segment_vector, segment_count, wood, post)
 	local p = {x=start_point.x, y=start_point.y, z=start_point.z}
-	local torches = nextrandom(0, 1) < probability_torches_in_segment
+	local torches = pr:next() < probability_torches_in_segment
 	local dir = {0, 0}
 	local torchdir = {1, 1}
 	local node_wood = {name=wood}
@@ -213,7 +213,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 		end
 		-- Diese komischen Holz-Konstruktionen
 		-- These strange wood structs
-		if segmentindex % 2 == 1 and segment_vector.y == 0 then			
+		if segmentindex % 2 == 1 and segment_vector.y == 0 then
 			local calc = {
 				p.x+dir[1], p.z+dir[2], -- X and Z, added by direction
 				p.x-dir[1], p.z-dir[2], -- subtracted
@@ -349,8 +349,8 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post)
 		end
 	end
 	local chestplace = -1
-	if nextrandom(0,1) < probability_chest then
-		chestplace = math.floor(nextrandom(1,segcount+1))
+	if pr:next() < probability_chest then
+		chestplace = pr:next(1,segcount+1)
 	end
 	if not up_or_down then
 		for i=1,segcount do
@@ -383,9 +383,9 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
 	for i=1,length do
 		-- Nach oben oder nach unten?
 		--Up or down?
-		if nextrandom(0, 1) < probability_up_or_down and i~=1 then
+		if pr:next() < probability_up_or_down and i~=1 then
 			ud = true
-			up = nextrandom(0, 2) < 1
+			up = pr:next(0, 2) < 1
 		else
 			 ud = false
 		end
@@ -393,12 +393,12 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
 		wp = corridor_func(wp,c,s, ud, up, wood, post)
 		-- Verzweigung?
 		-- Fork?
-		if nextrandom(0, 1) < probability_fork then
+		if pr:next() < probability_fork then
 			local p = {x=wp.x, y=wp.y, z=wp.z}
-			start_corridor(wp, c, s, nextrandom(way_min,way_max), psra, wood, post)
+			start_corridor(wp, c, s, pr:next(way_min,way_max), psra, wood, post)
 			if c == "x" then c="z" else c="x" end
-			start_corridor(wp, c, s, nextrandom(way_min,way_max), psra, wood, post)
-			start_corridor(wp, c, not s, nextrandom(way_min,way_max), psra, wood, post)
+			start_corridor(wp, c, s, pr:next(way_min,way_max), psra, wood, post)
+			start_corridor(wp, c, not s, pr:next(way_min,way_max), psra, wood, post)
 			WoodBulk({x=p.x, y=p.y-1, z=p.z}, wood)
 			WoodBulk({x=p.x, y=p.y,   z=p.z}, wood)
 			WoodBulk({x=p.x, y=p.y+1, z=p.z}, wood)
@@ -412,7 +412,7 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
 		elseif c=="z" then
 			c="x"
 	 	end;
-		s = nextrandom(0, 2) < 1
+		s = pr:next(0, 2) < 1
 	end
 end
 
@@ -425,7 +425,7 @@ local corridor_woods = {
 }
 
 local function place_corridors(main_cave_coords, psra)
-	if nextrandom(0, 1) < 0.5 then	
+	if pr:next(0, 100) < 50 then
 		Cube(main_cave_coords, 4, {name="default:dirt"})
 		Cube(main_cave_coords, 3, {name="air"})
 		main_cave_coords.y =main_cave_coords.y - 1
@@ -433,8 +433,8 @@ local function place_corridors(main_cave_coords, psra)
 		Cube(main_cave_coords, 3, {name="default:dirt"})
 		Cube(main_cave_coords, 2, {name="air"})
 	end
-	local xs = nextrandom(0, 2) < 1
-	local zs = nextrandom(0, 2) < 1;
+	local xs = pr:next(0, 2) < 1
+	local zs = pr:next(0, 2) < 1;
 
 	-- Select random wood type, but with bias towards default wood
 	local rnd = pr:next(1,1000)
@@ -458,15 +458,15 @@ local function place_corridors(main_cave_coords, psra)
 	end
 	local wood = corridor_woods[woodtype].wood
 	local post = corridor_woods[woodtype].post
-	start_corridor(main_cave_coords, "x", xs, nextrandom(way_min,way_max), psra, wood, post)
-	start_corridor(main_cave_coords, "z", zs, nextrandom(way_min,way_max), psra, wood, post)
+	start_corridor(main_cave_coords, "x", xs, pr:next(way_min,way_max), psra, wood, post)
+	start_corridor(main_cave_coords, "z", zs, pr:next(way_min,way_max), psra, wood, post)
 	-- Auch mal die andere Richtung?
 	-- Try the other direction?
-	if nextrandom(0, 1) < 0.7 then
-		start_corridor(main_cave_coords, "x", not xs, nextrandom(way_min,way_max), psra, wood, post)
+	if pr:next(0, 100) < 70 then
+		start_corridor(main_cave_coords, "x", not xs, pr:next(way_min,way_max), psra, wood, post)
 	end
-	if nextrandom(0, 1) < 0.7 then
-		start_corridor(main_cave_coords, "z", not zs, nextrandom(way_min,way_max), psra, wood, post)
+	if pr:next(0, 100) < 70 then
+		start_corridor(main_cave_coords, "z", not zs, pr:next(way_min,way_max), psra, wood, post)
 	end
 end
 
@@ -474,7 +474,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	if not pr_initialized then
 		InitRandomizer(seed)
 	end
-	if maxp.y < 0 and nextrandom(0, 1) < probability_railcaves_in_chunk then
+	if maxp.y < 0 and pr:next() < probability_railcaves_in_chunk then
 		-- Mittelpunkt berechnen
 		-- Mid point of the chunk
 		local p = {x=minp.x+(maxp.x-minp.x)/2, y=minp.y+(maxp.y-minp.y)/2, z=minp.z+(maxp.z-minp.z)/2}
