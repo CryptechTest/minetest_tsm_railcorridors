@@ -440,10 +440,10 @@ local function place_corridors(main_cave_coords, psra)
 	local rnd = pr:next(1,1000)
 
 	local woodtype
-	-- Wood: 88%
-	if rnd <= 880 then
+	-- Wood: 80%
+	if rnd <= 800 then
 		woodtype = "wood"
-	-- Jungle: 7%
+	-- Jungle: 15%
 	elseif rnd <= 950 then
 		woodtype = "jungle"
 	-- Acacia: 4.5%
