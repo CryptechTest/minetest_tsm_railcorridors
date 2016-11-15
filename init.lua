@@ -279,12 +279,20 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 				local node = {name="default:torch", param2=minetest.dir_to_wallmounted({x=0,y=-1,z=0})}
 
 				-- Try two different height levels
-				if not SetNodeIfCanBuild({x=calc[1], y=p.y-2, z=calc[2]}, node) then
-					SetNodeIfCanBuild({x=calc[1], y=p.y-1, z=calc[2]}, node)
+				local pos1 = {x=calc[1], y=p.y-2, z=calc[2]}
+				local pos2 = {x=calc[3], y=p.y-2, z=calc[4]}
+				local nodedef1 = minetest.registered_nodes[minetest.get_node(pos1).name]
+				local nodedef2 = minetest.registered_nodes[minetest.get_node(pos2).name]
+
+				if nodedef1.walkable then
+					pos1.y = pos1.y + 1
 				end
-				if not SetNodeIfCanBuild({x=calc[3], y=p.y-2, z=calc[4]}, node) then
-					SetNodeIfCanBuild({x=calc[3], y=p.y-1, z=calc[4]}, node)
+				SetNodeIfCanBuild(pos1, node)
+
+				if nodedef2.walkable then
+					pos2.y = pos2.y + 1
 				end
+				SetNodeIfCanBuild(pos2, node)
 
 			end
 		end
