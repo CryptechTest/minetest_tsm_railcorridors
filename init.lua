@@ -95,6 +95,13 @@ local function SetNodeIfCanBuild(pos, node)
 	end
 end
 
+-- Returns true if the node as point can be considered “ground”, that is, a solid material
+-- in which mine shafts can be built into, e.g. stone, but not air or water
+local function IsGround(pos)
+	local nodedef = minetest.registered_nodes[minetest.get_node(pos).name]
+	return nodedef.is_ground_content and nodedef.walkable and nodedef.liquidtype == "none"
+end
+
 -- Checks if the node is empty space which requires to be filled by a platform
 local function NeedsPlatform(pos)
 	local node = minetest.get_node(pos)
@@ -445,6 +452,14 @@ local corridor_woods = {
 }
 
 local function place_corridors(main_cave_coords, psra)
+	--[[ ALWAYS start building in the ground. Prevents corridors starting
+	in mid-air or in liquids. ]]
+	if not IsGround(main_cave_coords) then
+		return
+	end
+
+	--[[ Starter cube: A big hollow dirt cube from which the corridors will extend.
+	Corridor generation starts here. ]]
 	if pr:next(0, 100) < 50 then
 		Cube(main_cave_coords, 4, {name="default:dirt"})
 		Cube(main_cave_coords, 3, {name="air"})
