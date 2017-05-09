@@ -24,4 +24,4 @@ tsm_railcorridors_probability_chest (Chest probability) float 0.05 0.0 1.0
 tsm_railcorridors_height_min (Minimum height) int -31000 -31000 31000
 
 #Maximum height in which rail corridors are created.
-tsm_railcorridors_height_max (Maxiumum height) int -5 -31000 31000
+tsm_railcorridors_height_max (Maximum height) int -30 -31000 31000

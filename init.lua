@@ -405,7 +405,15 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
 		--Up or down?
 		if pr:next() < probability_up_or_down and i~=1 then
 			ud = true
-			up = pr:next(0, 2) < 1
+			-- Force direction near the height limits
+			if wp.y >= height_max - 12 then
+				up = false
+			elseif wp.y <= height_min + 12 then
+				up = true
+			else
+				-- Chose random direction in between
+				up = pr:next(0, 2) < 1
+			end
 		else
 			 ud = false
 		end
@@ -494,7 +502,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	if not pr_initialized then
 		InitRandomizer(seed)
 	end
-	if maxp.y < height_max+5 and minp.y > height_min-5 and pr:next() < probability_railcaves_in_chunk then
+	if minp.y < height_max and maxp.y > height_min and pr:next() < probability_railcaves_in_chunk then
 		-- Mittelpunkt berechnen
 		-- Mid point of the chunk
 		local p = {x=minp.x+(maxp.x-minp.x)/2, y=math.max(height_min, math.min(height_max, minp.y+(maxp.y-minp.y)/2)), z=minp.z+(maxp.z-minp.z)/2}
