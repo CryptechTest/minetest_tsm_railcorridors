@@ -62,7 +62,7 @@ end
 
 -- Max. and min. heights between rail corridors are generated
 local height_min = -31000
-local height_max = -5
+local height_max = -30
 setting = tonumber(minetest.setting_get("tsm_railcorridors_height_min"))
 if setting then
 	height_min = setting
