@@ -275,16 +275,8 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 				-- Torches on the middle planks
 				if torches and top_planks_ok then
 					-- Place torches at horizontal sides
-					local walltorchtype
-					if minetest.get_modpath("torches") then
-						--[[ This is compability code with the torches mod, which overwrites the way how torches work.
-						This is needed so that torches are drawn properly. ]]
-						walltorchtype = "default:torch_wall"
-					else
-						walltorchtype = "default:torch"
-					end
-					SetNodeIfCanBuild({x=calc[5], y=p.y+1, z=calc[6]}, {name=walltorchtype, param2=torchdir[1]})
-					SetNodeIfCanBuild({x=calc[7], y=p.y+1, z=calc[8]}, {name=walltorchtype, param2=torchdir[2]})
+					SetNodeIfCanBuild({x=calc[5], y=p.y+1, z=calc[6]}, {name="default:torch_wall", param2=torchdir[1]})
+					SetNodeIfCanBuild({x=calc[7], y=p.y+1, z=calc[8]}, {name="default:torch_wall", param2=torchdir[2]})
 				end
 			elseif torches then
 				-- Try to build torches instead of the wood structs
@@ -505,7 +497,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	if minp.y < height_max and maxp.y > height_min and pr:next() < probability_railcaves_in_chunk then
 		-- Mittelpunkt berechnen
 		-- Mid point of the chunk
-		local p = {x=minp.x+(maxp.x-minp.x)/2, y=math.max(height_min, math.min(height_max, minp.y+(maxp.y-minp.y)/2)), z=minp.z+(maxp.z-minp.z)/2}
+		local y = math.floor(math.max(height_min, math.min(height_max, minp.y+(maxp.y-minp.y)/2)))
+		local p = {x=minp.x+(maxp.x-minp.x)/2, y=y, z=minp.z+(maxp.z-minp.z)/2}
 		-- Haupthöhle und alle weiteren
 		-- Corridors; starting with main cave out of dirt
 		place_corridors(p, pr)
