@@ -60,6 +60,18 @@ if setting then
 	probability_chest = P(setting)
 end
 
+-- Max. and min. heights between rail corridors are generated
+local height_min = -31000
+local height_max = -5
+setting = tonumber(minetest.setting_get("tsm_railcorridors_height_min"))
+if setting then
+	height_min = setting
+end
+setting = tonumber(minetest.setting_get("tsm_railcorridors_height_max"))
+if setting then
+	height_max = setting
+end
+
 -- Parameter Ende
 
 
@@ -482,10 +494,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	if not pr_initialized then
 		InitRandomizer(seed)
 	end
-	if maxp.y < 0 and pr:next() < probability_railcaves_in_chunk then
+	if maxp.y < height_max+5 and minp.y > height_min-5 and pr:next() < probability_railcaves_in_chunk then
 		-- Mittelpunkt berechnen
 		-- Mid point of the chunk
-		local p = {x=minp.x+(maxp.x-minp.x)/2, y=minp.y+(maxp.y-minp.y)/2, z=minp.z+(maxp.z-minp.z)/2}
+		local p = {x=minp.x+(maxp.x-minp.x)/2, y=math.max(height_min, math.min(height_max, minp.y+(maxp.y-minp.y)/2)), z=minp.z+(maxp.z-minp.z)/2}
 		-- Haupthöhle und alle weiteren
 		-- Corridors; starting with main cave out of dirt
 		place_corridors(p, pr)
