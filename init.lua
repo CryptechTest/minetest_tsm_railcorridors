@@ -402,12 +402,12 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
 	local wp = waypoint
 	local c = coord
 	local s = sign
-	local ud
+	local ud = false -- up or down
 	local up
 	for i=1,length do
-		-- Nach oben oder nach unten?
-		--Up or down?
-		if pr:next() < probability_up_or_down and i~=1 then
+		-- Up or down?
+		-- ud is also checked to prevent chaining up/down segments
+		if pr:next() < probability_up_or_down and i~=1 and not ud then
 			ud = true
 			-- Force direction near the height limits
 			if wp.y >= height_max - 12 then
@@ -419,7 +419,7 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
 				up = pr:next(0, 2) < 1
 			end
 		else
-			 ud = false
+			ud = false
 		end
 		-- Make corridor / Korridor graben
 		wp = corridor_func(wp,c,s, ud, up, wood, post, i == length)
