@@ -1,4 +1,9 @@
--- „Parameter“/„Settings“
+tsm_railcorridors = {}
+
+-- Load node names
+dofile(minetest.get_modpath(minetest.get_current_modname()).."/gameconfig.lua")
+
+-- Settings
 local setting
 
 -- Probability function
@@ -74,7 +79,6 @@ end
 
 -- Parameter Ende
 
-
 -- random generator
 local pr
 local pr_initialized = false
@@ -113,7 +117,7 @@ local function NeedsPlatform(pos)
 	local node = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
 	local node2 = minetest.get_node({x=pos.x,y=pos.y-2,z=pos.z})
 	local nodedef = minetest.registered_nodes[node.name]
-	return nodedef.is_ground_content and nodedef.walkable == false and node2.name ~= "default:dirt"
+	return nodedef.is_ground_content and nodedef.walkable == false and node2.name ~= tsm_railcorridors.nodes.dirt
 end
 
 -- Würfel…
@@ -196,7 +200,7 @@ local function rci()
 end
 -- chests
 local function Place_Chest(pos)
-	if SetNodeIfCanBuild(pos, {name="default:chest"}) then
+	if SetNodeIfCanBuild(pos, {name=tsm_railcorridors.nodes.chest}) then
 		local meta = minetest.get_meta(pos)
 		local inv = meta:get_inventory()
 		for i=1,32 do
@@ -287,12 +291,12 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 				-- Torches on the middle planks
 				if torches and top_planks_ok then
 					-- Place torches at horizontal sides
-					SetNodeIfCanBuild({x=calc[5], y=p.y+1, z=calc[6]}, {name="default:torch_wall", param2=torchdir[1]})
-					SetNodeIfCanBuild({x=calc[7], y=p.y+1, z=calc[8]}, {name="default:torch_wall", param2=torchdir[2]})
+					SetNodeIfCanBuild({x=calc[5], y=p.y+1, z=calc[6]}, {name=tsm_railcorridors.nodes.torch_wall, param2=torchdir[1]})
+					SetNodeIfCanBuild({x=calc[7], y=p.y+1, z=calc[8]}, {name=tsm_railcorridors.nodes.torch_wall, param2=torchdir[2]})
 				end
 			elseif torches then
 				-- Try to build torches instead of the wood structs
-				local node = {name="default:torch", param2=minetest.dir_to_wallmounted({x=0,y=-1,z=0})}
+				local node = {name=tsm_railcorridors.nodes.torch_floor, param2=minetest.dir_to_wallmounted({x=0,y=-1,z=0})}
 
 				-- Try two different height levels
 				local pos1 = {x=calc[1], y=p.y-2, z=calc[2]}
@@ -387,11 +391,11 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 	end
 	for i=1,segcount do
 		local p = {x=waypoint.x+vek.x*i, y=waypoint.y+vek.y*i-1, z=waypoint.z+vek.z*i}
-		if (minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~="default:rail") then
+		if (minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~=tsm_railcorridors.nodes.rail) then
 			p.y = p.y - 1;
 		end
 		if IsRailSurface({x=p.x,y=p.y-1,z=p.z}) then
-			SetNodeIfCanBuild(p, {name = "default:rail"})
+			SetNodeIfCanBuild(p, {name = tsm_railcorridors.nodes.rail})
 		end
 		if i == chestplace then
 			if minetest.get_node({x=p.x+vek.z,y=p.y-1,z=p.z-vek.x}).name == post then
@@ -412,7 +416,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 			offset[coord] = offset[coord] + segamount
 			final_point = vector.add(waypoint, offset)
 			if IsRailSurface({x=final_point.x,y=final_point.y-2,z=final_point.z}) then
-				SetNodeIfCanBuild({x=final_point.x,y=final_point.y-1,z=final_point.z}, {name = "default:rail"})
+				SetNodeIfCanBuild({x=final_point.x,y=final_point.y-1,z=final_point.z}, {name = tsm_railcorridors.nodes.rail})
 			end
 		end
 	end
@@ -475,14 +479,6 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
 	end
 end
 
-local corridor_woods = {
-	wood = { wood = "default:wood", post = "default:fence_wood"},
-	jungle = { wood = "default:junglewood", post = "default:fence_junglewood"},
-	acacia = { wood = "default:acacia_wood", post = "default:fence_acacia_wood"},
-	pine = { wood = "default:pine_wood", post = "default:fence_pine_wood"},
-	aspen = { wood = "default:aspen_wood", post = "default:fence_aspen_wood"},
-}
-
 local function place_corridors(main_cave_coords, psra)
 	--[[ ALWAYS start building in the ground. Prevents corridors starting
 	in mid-air or in liquids. ]]
@@ -493,40 +489,37 @@ local function place_corridors(main_cave_coords, psra)
 	--[[ Starter cube: A big hollow dirt cube from which the corridors will extend.
 	Corridor generation starts here. ]]
 	if pr:next(0, 100) < 50 then
-		Cube(main_cave_coords, 4, {name="default:dirt"})
+		Cube(main_cave_coords, 4, {name=tsm_railcorridors.nodes.dirt})
 		Cube(main_cave_coords, 3, {name="air"})
-		SetNodeIfCanBuild({x=main_cave_coords.x, y=main_cave_coords.y-3, z=main_cave_coords.z}, {name = "default:rail"})
+		SetNodeIfCanBuild({x=main_cave_coords.x, y=main_cave_coords.y-3, z=main_cave_coords.z}, {name = tsm_railcorridors.nodes.rail})
 		main_cave_coords.y =main_cave_coords.y - 1
 	else
-		Cube(main_cave_coords, 3, {name="default:dirt"})
+		Cube(main_cave_coords, 3, {name=tsm_railcorridors.nodes.dirt})
 		Cube(main_cave_coords, 2, {name="air"})
-		SetNodeIfCanBuild({x=main_cave_coords.x, y=main_cave_coords.y-2, z=main_cave_coords.z}, {name = "default:rail"})
+		SetNodeIfCanBuild({x=main_cave_coords.x, y=main_cave_coords.y-2, z=main_cave_coords.z}, {name = tsm_railcorridors.nodes.rail})
 	end
 	local xs = pr:next(0, 2) < 1
 	local zs = pr:next(0, 2) < 1;
 
-	-- Select random wood type, but with bias towards default wood
+	-- Select random wood type (found in gameconfig.lua)
 	local rnd = pr:next(1,1000)
 
-	local woodtype
-	-- Wood: 80%
-	if rnd <= 800 then
-		woodtype = "wood"
-	-- Jungle: 15%
-	elseif rnd <= 950 then
-		woodtype = "jungle"
-	-- Acacia: 4.5%
-	elseif rnd <= 995 then
-		woodtype = "acacia"
-	-- Pine: 0.3%
-	elseif rnd <= 998 then
-		woodtype = "pine"
-	-- Aspen: 0.2%
-	else
-		woodtype = "aspen"
+	local woodtype = 1
+	local accumulated_chance = 0
+	for w=1, #tsm_railcorridors.nodes.corridor_woods do
+		local woodtable = tsm_railcorridors.nodes.corridor_woods[w]
+		accumulated_chance = accumulated_chance + woodtable.chance
+		if accumulated_chance > 1000 then
+			minetest.log("warning", "[tsm_railcorridors] Warning: Wood chances add up to over 100%!")
+			break
+		end
+		if rnd <= accumulated_chance then
+			woodtype = w
+			break
+		end
 	end
-	local wood = corridor_woods[woodtype].wood
-	local post = corridor_woods[woodtype].post
+	local wood = tsm_railcorridors.nodes.corridor_woods[woodtype].wood
+	local post = tsm_railcorridors.nodes.corridor_woods[woodtype].post
 	start_corridor(main_cave_coords, "x", xs, pr:next(way_min,way_max), psra, wood, post)
 	start_corridor(main_cave_coords, "z", zs, pr:next(way_min,way_max), psra, wood, post)
 	-- Auch mal die andere Richtung?
