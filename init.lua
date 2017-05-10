@@ -316,6 +316,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	-- End of the corridor; create the final piece
 	if is_final then
 		Cube(p, 1, {name="air"})
+		Platform(p, 1, node_wood)
 	end
 end
 
