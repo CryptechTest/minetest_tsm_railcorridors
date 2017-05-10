@@ -366,24 +366,22 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 		segcount = segcount * 3
 	end
 	local chestplace = -1
-	if pr:next() < probability_chest then
+	if not up_or_down and pr:next() < probability_chest then
 		chestplace = pr:next(1,segcount+1)
 	end
-	if not up_or_down then
-		for i=1,segcount do
-			local p = {x=waypoint.x+vek.x*i, y=waypoint.y+vek.y*i-1, z=waypoint.z+vek.z*i}
-			if minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~="default:rail" then
-				p.y = p.y - 1;
-			end
-			if minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name ~="default:rail" then
-				SetNodeIfCanBuild(p, {name = "default:rail"})
-			end
-			if i == chestplace then
-				if minetest.get_node({x=p.x+vek.z,y=p.y-1,z=p.z-vek.x}).name == post then
-					chestplace = chestplace + 1
-				else
-					Place_Chest({x=p.x+vek.z,y=p.y,z=p.z-vek.x})
-				end
+	for i=1,segcount do
+		local p = {x=waypoint.x+vek.x*i, y=waypoint.y+vek.y*i-1, z=waypoint.z+vek.z*i}
+		if minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~="default:rail" then
+			p.y = p.y - 1;
+		end
+		if minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name ~="default:rail" then
+			SetNodeIfCanBuild(p, {name = "default:rail"})
+		end
+		if i == chestplace then
+			if minetest.get_node({x=p.x+vek.z,y=p.y-1,z=p.z-vek.x}).name == post then
+				chestplace = chestplace + 1
+			else
+				Place_Chest({x=p.x+vek.z,y=p.y,z=p.z-vek.x})
 			end
 		end
 	end
