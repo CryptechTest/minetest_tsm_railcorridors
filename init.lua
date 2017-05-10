@@ -384,7 +384,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 		if (minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~="default:rail") then
 			p.y = p.y - 1;
 		end
-		if minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name ~="default:rail" then
+		if minetest.registered_nodes[minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name].walkable then
 			SetNodeIfCanBuild(p, {name = "default:rail"})
 		end
 		if i == chestplace then
@@ -405,7 +405,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 		else
 			offset[coord] = offset[coord] + segamount
 			final_point = vector.add(waypoint, offset)
-			if minetest.get_node(final_point).name ~="default:rail" then
+			if minetest.registered_nodes[minetest.get_node({x=final_point.x,y=final_point.y-2,z=final_point.z}).name].walkable then
 				SetNodeIfCanBuild({x=final_point.x,y=final_point.y-1,z=final_point.z}, {name = "default:rail"})
 			end
 		end
