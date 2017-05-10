@@ -365,13 +365,6 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 	if not up_or_down then
 		segcount = segcount * 3
 	end
-	local minuend = 1
-	if up_or_down then
-		minuend = minuend - 1
-		if not up then
-			minuend = minuend - 1
-		end
-	end
 	local chestplace = -1
 	if pr:next() < probability_chest then
 		chestplace = pr:next(1,segcount+1)
