@@ -328,10 +328,17 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 		segamount = 0-segamount
 	end
 	local vek = {x=0,y=0,z=0};
+	local start = table.copy(waypoint)
 	if coord == "x" then
 		vek.x=segamount
+		if up_or_down and up == false then
+			start.x=start.x+segamount
+		end
 	elseif coord == "z" then
 		vek.z=segamount
+		if up_or_down and up == false then
+			start.z=start.z+segamount
+		end
 	end
 	if up_or_down then
 		if up then
@@ -341,7 +348,10 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 		end
 	end
 	local segcount = pr:next(4,6)
-	corridor_part(waypoint, vek, segcount, wood, post, is_final)
+	if up_or_down and up == false then
+		Cube(waypoint, 1, {name="air"})
+	end
+	corridor_part(start, vek, segcount, wood, post, is_final)
 	local corridor_vek = {x=vek.x*segcount, y=vek.y*segcount, z=vek.z*segcount}
 
 	-- nachträglich Schienen legen
@@ -371,9 +381,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 	end
 	for i=1,segcount do
 		local p = {x=waypoint.x+vek.x*i, y=waypoint.y+vek.y*i-1, z=waypoint.z+vek.z*i}
-		if (minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~="default:rail") or
-				((i >= segcount - 1) and up_or_down_next and up == false) or
-				((i <= 2) and up_or_down_next and up == true) then
+		if (minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~="default:rail") then
 			p.y = p.y - 1;
 		end
 		if minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name ~="default:rail" then
@@ -388,7 +396,21 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 		end
 	end
 	
-	return {x=waypoint.x+corridor_vek.x, y=waypoint.y+corridor_vek.y, z=waypoint.z+corridor_vek.z}
+	local offset = table.copy(corridor_vek)
+	local final_point = vector.add(waypoint, offset)
+	if up_or_down then
+		if up then
+			offset.y = offset.y - 1
+			final_point = vector.add(waypoint, offset)
+		else
+			offset[coord] = offset[coord] + segamount
+			final_point = vector.add(waypoint, offset)
+			if minetest.get_node(final_point).name ~="default:rail" then
+				SetNodeIfCanBuild({x=final_point.x,y=final_point.y-1,z=final_point.z}, {name = "default:rail"})
+			end
+		end
+	end
+	return final_point
 end
 
 local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
