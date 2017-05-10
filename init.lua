@@ -463,10 +463,12 @@ local function place_corridors(main_cave_coords, psra)
 	if pr:next(0, 100) < 50 then
 		Cube(main_cave_coords, 4, {name="default:dirt"})
 		Cube(main_cave_coords, 3, {name="air"})
+		SetNodeIfCanBuild({x=main_cave_coords.x, y=main_cave_coords.y-3, z=main_cave_coords.z}, {name = "default:rail"})
 		main_cave_coords.y =main_cave_coords.y - 1
 	else
 		Cube(main_cave_coords, 3, {name="default:dirt"})
 		Cube(main_cave_coords, 2, {name="air"})
+		SetNodeIfCanBuild({x=main_cave_coords.x, y=main_cave_coords.y-2, z=main_cave_coords.z}, {name = "default:rail"})
 	end
 	local xs = pr:next(0, 2) < 1
 	local zs = pr:next(0, 2) < 1;
