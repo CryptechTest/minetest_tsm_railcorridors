@@ -104,12 +104,10 @@ end
 
 -- Checks if the node is empty space which requires to be filled by a platform
 local function NeedsPlatform(pos)
-	local node = minetest.get_node(pos)
-	local node2 = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
+	local node = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
+	local node2 = minetest.get_node({x=pos.x,y=pos.y-2,z=pos.z})
 	local nodedef = minetest.registered_nodes[node.name]
-	local node2def = minetest.registered_nodes[node2.name]
-	return nodedef.is_ground_content and nodedef.walkable == false
-		and node2def.is_ground_content and node2def.walkable == false
+	return nodedef.is_ground_content and nodedef.walkable == false and node2.name ~= "default:dirt"
 end
 
 -- Würfel…
@@ -127,8 +125,9 @@ end
 local function Platform(p, radius, node)
 	for zi = p.z-radius, p.z+radius do
 		for xi = p.x-radius, p.x+radius do
-			if NeedsPlatform({x=xi,y=p.y-(radius+1),z=zi}) then
-				minetest.set_node({x=xi,y=p.y-(radius+1),z=zi}, node)
+			local np = NeedsPlatform({x=xi,y=p.y,z=zi})
+			if np then
+				minetest.set_node({x=xi,y=p.y-1,z=zi}, node)
 			end
 		end
 	end
@@ -228,7 +227,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 		Cube(p, 1, {name="air"})
 		-- Add wooden platform, if neccessary. To avoid floating rails
 		if segment_vector.y == 0 then
-			Platform(p, 1, node_wood)
+			Platform({x=p.x, y=p.y-1, z=p.z}, 1, node_wood)
 		end
 		-- Diese komischen Holz-Konstruktionen
 		-- These strange wood structs
@@ -316,7 +315,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	-- End of the corridor; create the final piece
 	if is_final then
 		Cube(p, 1, {name="air"})
-		Platform(p, 1, node_wood)
+		Platform({x=p.x, y=p.y-1, z=p.z}, 1, node_wood)
 	end
 end
 
