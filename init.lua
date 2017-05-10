@@ -319,7 +319,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	end
 end
 
-local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, is_final)
+local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, is_final, up_or_down_next)
 	local segamount = 3
 	if up_or_down then
 		segamount = 1
@@ -371,7 +371,9 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 	end
 	for i=1,segcount do
 		local p = {x=waypoint.x+vek.x*i, y=waypoint.y+vek.y*i-1, z=waypoint.z+vek.z*i}
-		if minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~="default:rail" then
+		if (minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~="default:rail") or
+				((i >= segcount - 1) and up_or_down_next and up == false) or
+				((i <= 2) and up_or_down_next and up == true) then
 			p.y = p.y - 1;
 		end
 		if minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name ~="default:rail" then
@@ -394,11 +396,11 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
 	local c = coord
 	local s = sign
 	local ud = false -- up or down
+	local udn = false -- up or down is next
 	local up
 	for i=1,length do
 		-- Up or down?
-		-- ud is also checked to prevent chaining up/down segments
-		if pr:next() < probability_up_or_down and i~=1 and not ud then
+		if udn then
 			ud = true
 			-- Force direction near the height limits
 			if wp.y >= height_max - 12 then
@@ -412,8 +414,14 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
 		else
 			ud = false
 		end
+		-- Update up/down next
+		if pr:next() < probability_up_or_down and i~=1 and not udn then
+			udn = i < length
+		elseif udn then
+			udn = false
+		end
 		-- Make corridor / Korridor graben
-		wp = corridor_func(wp,c,s, ud, up, wood, post, i == length)
+		wp = corridor_func(wp,c,s, ud, up, wood, post, i == length, udn)
 		-- Verzweigung?
 		-- Fork?
 		if pr:next() < probability_fork then
