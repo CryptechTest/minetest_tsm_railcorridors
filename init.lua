@@ -102,6 +102,12 @@ local function IsGround(pos)
 	return nodedef.is_ground_content and nodedef.walkable and nodedef.liquidtype == "none"
 end
 
+-- Returns true if rails are allowed to be placed on top of this node
+local function IsRailSurface(pos)
+	local nodedef = minetest.registered_nodes[minetest.get_node(pos).name]
+	return nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular")
+end
+
 -- Checks if the node is empty space which requires to be filled by a platform
 local function NeedsPlatform(pos)
 	local node = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
@@ -384,7 +390,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 		if (minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~="default:rail") then
 			p.y = p.y - 1;
 		end
-		if minetest.registered_nodes[minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name].walkable then
+		if IsRailSurface({x=p.x,y=p.y-1,z=p.z}) then
 			SetNodeIfCanBuild(p, {name = "default:rail"})
 		end
 		if i == chestplace then
@@ -405,7 +411,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 		else
 			offset[coord] = offset[coord] + segamount
 			final_point = vector.add(waypoint, offset)
-			if minetest.registered_nodes[minetest.get_node({x=final_point.x,y=final_point.y-2,z=final_point.z}).name].walkable then
+			if IsRailSurface({x=final_point.x,y=final_point.y-2,z=final_point.z}) then
 				SetNodeIfCanBuild({x=final_point.x,y=final_point.y-1,z=final_point.z}, {name = "default:rail"})
 			end
 		end
