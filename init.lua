@@ -210,7 +210,7 @@ end
 -- Gänge mit Schienen
 -- Corridors with rails
 
-local function corridor_part(start_point, segment_vector, segment_count, wood, post)
+local function corridor_part(start_point, segment_vector, segment_count, wood, post, is_final)
 	local p = {x=start_point.x, y=start_point.y, z=start_point.z}
 	local torches = pr:next() < probability_torches_in_segment
 	local dir = {0, 0}
@@ -312,9 +312,14 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 		-- next way point
 		p = vector.add(p, segment_vector)
 	end
+
+	-- End of the corridor; create the final piece
+	if is_final then
+		Cube(p, 1, {name="air"})
+	end
 end
 
-local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post)
+local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, is_final)
 	local segamount = 3
 	if up_or_down then
 		segamount = 1
@@ -336,7 +341,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post)
 		end
 	end
 	local segcount = pr:next(4,6)
-	corridor_part(waypoint, vek, segcount, wood, post)
+	corridor_part(waypoint, vek, segcount, wood, post, is_final)
 	local corridor_vek = {x=vek.x*segcount, y=vek.y*segcount, z=vek.z*segcount}
 
 	-- nachträglich Schienen legen
@@ -417,7 +422,7 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
 			 ud = false
 		end
 		-- Make corridor / Korridor graben
-		wp = corridor_func(wp,c,s, ud, up, wood, post)
+		wp = corridor_func(wp,c,s, ud, up, wood, post, i == length)
 		-- Verzweigung?
 		-- Fork?
 		if pr:next() < probability_fork then
