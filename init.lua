@@ -102,14 +102,16 @@ end
 -- Returns true if the node as point can be considered “ground”, that is, a solid material
 -- in which mine shafts can be built into, e.g. stone, but not air or water
 local function IsGround(pos)
-	local nodedef = minetest.registered_nodes[minetest.get_node(pos).name]
-	return nodedef.is_ground_content and nodedef.walkable and nodedef.liquidtype == "none"
+	local nodename = minetest.get_node(pos).name
+	local nodedef = minetest.registered_nodes[nodename]
+	return nodename ~= "unknown" and nodename ~= "ignore" and nodedef.is_ground_content and nodedef.walkable and nodedef.liquidtype == "none"
 end
 
 -- Returns true if rails are allowed to be placed on top of this node
 local function IsRailSurface(pos)
-	local nodedef = minetest.registered_nodes[minetest.get_node(pos).name]
-	return nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular")
+	local nodename = minetest.get_node(pos).name
+	local nodedef = minetest.registered_nodes[nodename]
+	return nodename ~= "unknown" and nodename ~= "ignore" and nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular")
 end
 
 -- Checks if the node is empty space which requires to be filled by a platform
