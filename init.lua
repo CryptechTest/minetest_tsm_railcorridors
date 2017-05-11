@@ -224,7 +224,7 @@ local function Place_Chest(pos)
 	if SetNodeIfCanBuild(pos, {name=tsm_railcorridors.nodes.chest}) then
 		local meta = minetest.get_meta(pos)
 		local inv = meta:get_inventory()
-		for i=1,32 do
+		for i=1, inv:get_size("main") do
 			inv:set_stack("main", i, ItemStack(rci()))
 		end
 	end
