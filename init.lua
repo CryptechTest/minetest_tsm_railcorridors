@@ -65,6 +65,13 @@ if setting then
 	probability_chest = P(setting)
 end
 
+-- Probability for a rail corridor system to be damaged
+local probability_damage = P(0.55)
+setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_damage"))
+if setting then
+	probability_damage = P(setting)
+end
+
 -- Max. and min. heights between rail corridors are generated
 local height_min = -31000
 local height_max = -30
@@ -88,6 +95,7 @@ local function InitRandomizer(seeed)
 	pr_initialized = true
 end
 
+
 -- Checks if the mapgen is allowed to carve through this structure and only sets
 -- the node if it is allowed.
 local function SetNodeIfCanBuild(pos, node)
@@ -97,6 +105,17 @@ local function SetNodeIfCanBuild(pos, node)
 	else
 		return false
 	end
+end
+
+-- Tries to place a rail, taking the damage chance into account
+local function PlaceRail(pos, damage_chance)
+	if damage_chance ~= nil and damage_chance > 0 then
+		local x = pr:next(0,100)
+		if x <= damage_chance then
+			return
+		end
+	end
+	SetNodeIfCanBuild(pos, {name=tsm_railcorridors.nodes.rail})
 end
 
 -- Returns true if the node as point can be considered “ground”, that is, a solid material
@@ -331,7 +350,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	end
 end
 
-local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, is_final, up_or_down_next)
+local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, is_final, up_or_down_next, damage)
 	local segamount = 3
 	if up_or_down then
 		segamount = 1
@@ -397,7 +416,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 			p.y = p.y - 1;
 		end
 		if IsRailSurface({x=p.x,y=p.y-1,z=p.z}) then
-			SetNodeIfCanBuild(p, {name = tsm_railcorridors.nodes.rail})
+			PlaceRail(p, damage)
 		end
 		if i == chestplace then
 			if minetest.get_node({x=p.x+vek.z,y=p.y-1,z=p.z-vek.x}).name == post then
@@ -418,14 +437,14 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 			offset[coord] = offset[coord] + segamount
 			final_point = vector.add(waypoint, offset)
 			if IsRailSurface({x=final_point.x,y=final_point.y-2,z=final_point.z}) then
-				SetNodeIfCanBuild({x=final_point.x,y=final_point.y-1,z=final_point.z}, {name = tsm_railcorridors.nodes.rail})
+				PlaceRail({x=final_point.x,y=final_point.y-1,z=final_point.z}, damage)
 			end
 		end
 	end
 	return final_point
 end
 
-local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
+local function start_corridor(waypoint, coord, sign, length, psra, wood, post, damage)
 	local wp = waypoint
 	local c = coord
 	local s = sign
@@ -455,15 +474,15 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post)
 			udn = false
 		end
 		-- Make corridor / Korridor graben
-		wp = corridor_func(wp,c,s, ud, up, wood, post, i == length, udn)
+		wp = corridor_func(wp,c,s, ud, up, wood, post, i == length, udn, damage)
 		-- Verzweigung?
 		-- Fork?
 		if pr:next() < probability_fork then
 			local p = {x=wp.x, y=wp.y, z=wp.z}
-			start_corridor(wp, c, s, pr:next(way_min,way_max), psra, wood, post)
+			start_corridor(wp, c, s, pr:next(way_min,way_max), psra, wood, post, damage)
 			if c == "x" then c="z" else c="x" end
-			start_corridor(wp, c, s, pr:next(way_min,way_max), psra, wood, post)
-			start_corridor(wp, c, not s, pr:next(way_min,way_max), psra, wood, post)
+			start_corridor(wp, c, s, pr:next(way_min,way_max), psra, wood, post, damage)
+			start_corridor(wp, c, not s, pr:next(way_min,way_max), psra, wood, post, damage)
 			WoodBulk({x=p.x, y=p.y-1, z=p.z}, wood)
 			WoodBulk({x=p.x, y=p.y,   z=p.z}, wood)
 			WoodBulk({x=p.x, y=p.y+1, z=p.z}, wood)
@@ -488,17 +507,22 @@ local function place_corridors(main_cave_coords, psra)
 		return
 	end
 
+	-- Determine if this corridor system is “damaged” (some rails removed) and to which extent
+	local damage = 0
+	if pr:next() < probability_damage then
+		damage = pr:next(10, 50)
+	end
 	--[[ Starter cube: A big hollow dirt cube from which the corridors will extend.
 	Corridor generation starts here. ]]
 	if pr:next(0, 100) < 50 then
 		Cube(main_cave_coords, 4, {name=tsm_railcorridors.nodes.dirt})
 		Cube(main_cave_coords, 3, {name="air"})
-		SetNodeIfCanBuild({x=main_cave_coords.x, y=main_cave_coords.y-3, z=main_cave_coords.z}, {name = tsm_railcorridors.nodes.rail})
+		PlaceRail({x=main_cave_coords.x, y=main_cave_coords.y-3, z=main_cave_coords.z}, damage)
 		main_cave_coords.y =main_cave_coords.y - 1
 	else
 		Cube(main_cave_coords, 3, {name=tsm_railcorridors.nodes.dirt})
 		Cube(main_cave_coords, 2, {name="air"})
-		SetNodeIfCanBuild({x=main_cave_coords.x, y=main_cave_coords.y-2, z=main_cave_coords.z}, {name = tsm_railcorridors.nodes.rail})
+		PlaceRail({x=main_cave_coords.x, y=main_cave_coords.y-2, z=main_cave_coords.z}, damage)
 	end
 	local xs = pr:next(0, 2) < 1
 	local zs = pr:next(0, 2) < 1;
@@ -522,15 +546,15 @@ local function place_corridors(main_cave_coords, psra)
 	end
 	local wood = tsm_railcorridors.nodes.corridor_woods[woodtype].wood
 	local post = tsm_railcorridors.nodes.corridor_woods[woodtype].post
-	start_corridor(main_cave_coords, "x", xs, pr:next(way_min,way_max), psra, wood, post)
-	start_corridor(main_cave_coords, "z", zs, pr:next(way_min,way_max), psra, wood, post)
+	start_corridor(main_cave_coords, "x", xs, pr:next(way_min,way_max), psra, wood, post, damage)
+	start_corridor(main_cave_coords, "z", zs, pr:next(way_min,way_max), psra, wood, post, damage)
 	-- Auch mal die andere Richtung?
 	-- Try the other direction?
 	if pr:next(0, 100) < 70 then
-		start_corridor(main_cave_coords, "x", not xs, pr:next(way_min,way_max), psra, wood, post)
+		start_corridor(main_cave_coords, "x", not xs, pr:next(way_min,way_max), psra, wood, post, damage)
 	end
 	if pr:next(0, 100) < 70 then
-		start_corridor(main_cave_coords, "z", not zs, pr:next(way_min,way_max), psra, wood, post)
+		start_corridor(main_cave_coords, "z", not zs, pr:next(way_min,way_max), psra, wood, post, damage)
 	end
 end
 
