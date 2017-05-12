@@ -98,7 +98,14 @@ end
 
 -- Checks if the mapgen is allowed to carve through this structure and only sets
 -- the node if it is allowed.
-local function SetNodeIfCanBuild(pos, node)
+-- If check_above is true, don't build if the node above is attached (e.g. rail).
+local function SetNodeIfCanBuild(pos, node, check_above)
+	if check_above then
+		local abovedef = minetest.registered_nodes[minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z}).name]
+		if abovedef.groups and abovedef.groups.attached_node then
+			return false
+		end
+	end
 	if minetest.registered_nodes[minetest.get_node(pos).name].is_ground_content then
 		minetest.set_node(pos, node)
 		return true
@@ -143,18 +150,20 @@ end
 
 -- Create a cube filled with the specified nodes
 -- Specialties:
--- * Avoids floating rails for air cubes
+-- * Avoids floating rails for non-solid nodes like air
 -- Returns true if all nodes could be set
 -- Returns false if setting one or more nodes failed
 local function Cube(p, radius, node)
 	local y_top = p.y+radius
+	local nodedef = minetest.registered_nodes[node.name]
+	local solid = nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular")
 	-- Check if all the nodes could be set
 	local built_all = true
 	for zi = p.z-radius, p.z+radius do
 		for yi = y_top, p.y-radius, -1 do
 			for xi = p.x-radius, p.x+radius do
 				local ok = false
-				if node.name == "air" and yi == y_top then
+				if not solid and yi == y_top then
 					local topdef = minetest.registered_nodes[minetest.get_node({x=xi,y=yi+1,z=zi}).name]
 					if not (topdef.groups and topdef.groups.attached_node) then
 						ok = true
@@ -344,8 +353,8 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 				-- Torches on the middle planks
 				if torches and top_planks_ok then
 					-- Place torches at horizontal sides
-					SetNodeIfCanBuild({x=calc[5], y=p.y+1, z=calc[6]}, {name=tsm_railcorridors.nodes.torch_wall, param2=torchdir[1]})
-					SetNodeIfCanBuild({x=calc[7], y=p.y+1, z=calc[8]}, {name=tsm_railcorridors.nodes.torch_wall, param2=torchdir[2]})
+					SetNodeIfCanBuild({x=calc[5], y=p.y+1, z=calc[6]}, {name=tsm_railcorridors.nodes.torch_wall, param2=torchdir[1]}, true)
+					SetNodeIfCanBuild({x=calc[7], y=p.y+1, z=calc[8]}, {name=tsm_railcorridors.nodes.torch_wall, param2=torchdir[2]}, true)
 				end
 			elseif torches then
 				-- Try to build torches instead of the wood structs
@@ -360,12 +369,12 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 				if nodedef1.walkable then
 					pos1.y = pos1.y + 1
 				end
-				SetNodeIfCanBuild(pos1, node)
+				SetNodeIfCanBuild(pos1, node, true)
 
 				if nodedef2.walkable then
 					pos2.y = pos2.y + 1
 				end
-				SetNodeIfCanBuild(pos2, node)
+				SetNodeIfCanBuild(pos2, node, true)
 
 			end
 		end
