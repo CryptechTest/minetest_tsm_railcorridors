@@ -175,7 +175,7 @@ local function Cube(p, radius, node)
 				if ok then
 					built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, node)
 				end
-				if not buillt then
+				if not built then
 					built_all = false
 				end
 			end
