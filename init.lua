@@ -141,16 +141,38 @@ local function NeedsPlatform(pos)
 	return node.name ~= "ignore" and node.name ~= "unknown" and nodedef.is_ground_content and nodedef.walkable == false and node2.name ~= tsm_railcorridors.nodes.dirt
 end
 
--- Würfel…
--- Cube…
+-- Create a cube filled with the specified nodes
+-- Specialties:
+-- * Avoids floating rails for air cubes
+-- Returns true if all nodes could be set
+-- Returns false if setting one or more nodes failed
 local function Cube(p, radius, node)
+	local y_top = p.y+radius
+	-- Check if all the nodes could be set
+	local built_all = true
 	for zi = p.z-radius, p.z+radius do
-		for yi = p.y-radius, p.y+radius do
+		for yi = y_top, p.y-radius, -1 do
 			for xi = p.x-radius, p.x+radius do
-				SetNodeIfCanBuild({x=xi,y=yi,z=zi}, node)
+				local ok = false
+				if node.name == "air" and yi == y_top then
+					local topdef = minetest.registered_nodes[minetest.get_node({x=xi,y=yi+1,z=zi}).name]
+					if not (topdef.groups and topdef.groups.attached_node) then
+						ok = true
+					end
+				else
+					ok = true
+				end
+				local built = false
+				if ok then
+					built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, node)
+				end
+				if not buillt then
+					built_all = false
+				end
 			end
 		end
 	end
+	return built_all
 end
 
 local function Platform(p, radius, node)
