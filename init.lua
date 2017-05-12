@@ -138,7 +138,7 @@ local function NeedsPlatform(pos)
 	local node = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
 	local node2 = minetest.get_node({x=pos.x,y=pos.y-2,z=pos.z})
 	local nodedef = minetest.registered_nodes[node.name]
-	return nodedef.is_ground_content and nodedef.walkable == false and node2.name ~= tsm_railcorridors.nodes.dirt
+	return node.name ~= "ignore" and node.name ~= "unknown" and nodedef.is_ground_content and nodedef.walkable == false and node2.name ~= tsm_railcorridors.nodes.dirt
 end
 
 -- Würfel…
