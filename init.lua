@@ -490,8 +490,13 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 	local udn = false -- up or down is next
 	local up
 	for i=1,length do
+		local needs_platform
 		-- Up or down?
 		if udn then
+			needs_platform = NeedsPlatform(wp)
+			if needs_platform then
+				ud = false
+			end
 			ud = true
 			-- Force direction near the height limits
 			if wp.y >= height_max - 12 then
@@ -506,9 +511,9 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 			ud = false
 		end
 		-- Update up/down next
-		if pr:next() < probability_up_or_down and i~=1 and not udn then
+		if pr:next() < probability_up_or_down and i~=1 and not udn and not needs_platform then
 			udn = i < length
-		elseif udn then
+		elseif udn and not needs_platform then
 			udn = false
 		end
 		-- Make corridor / Korridor graben
