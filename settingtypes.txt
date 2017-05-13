@@ -28,3 +28,9 @@ tsm_railcorridors_height_min (Minimum height) int -31000 -31000 31000
 
 #Maximum height in which rail corridors are created.
 tsm_railcorridors_height_max (Maximum height) int -30 -31000 31000
+
+#If enabled, rail corridors continue to generate through obstacles such
+#as other rail corridors (without destroying them, mostly). This may lead
+#to pretty chaotic rail corridors, but they are also more free to spread.
+#If disabled, rail corridors spread in a orderly fashion.
+tsm_railcorridors_chaos (Chaos Mode) bool false

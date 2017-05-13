@@ -84,6 +84,9 @@ if setting then
 	height_max = setting
 end
 
+-- Chaos Mode: If enabled, rail corridors don't stop generating when hitting obstacles
+local chaos_mode = minetest.setting_getbool("tsm_railcorridors_chaos") or false
+
 -- Parameter Ende
 
 -- random generator
@@ -296,7 +299,8 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 		torchdir = {3, 2}
 	end
 	for segmentindex = 0, segment_count-1 do
-		Cube(p, 1, {name="air"})
+		local dug = Cube(p, 1, {name="air"})
+		if not chaos_mode and segmentindex > 0 and not dug then return end
 		-- Add wooden platform, if neccessary. To avoid floating rails
 		if segment_vector.y == 0 then
 			Platform({x=p.x, y=p.y-1, z=p.z}, 1, node_wood)
@@ -386,9 +390,11 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 
 	-- End of the corridor; create the final piece
 	if is_final then
-		Cube(p, 1, {name="air"})
+		local dug = Cube(p, 1, {name="air"})
+		if not chaos_mode and not dug then return false end
 		Platform({x=p.x, y=p.y-1, z=p.z}, 1, node_wood)
 	end
+	return true
 end
 
 local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, is_final, up_or_down_next, damage)
@@ -423,7 +429,8 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 	if up_or_down and up == false then
 		Cube(waypoint, 1, {name="air"})
 	end
-	corridor_part(start, vek, segcount, wood, post, is_final)
+	local done = corridor_part(start, vek, segcount, wood, post, is_final)
+	if not chaos_mode and not done then return false end
 	local corridor_vek = {x=vek.x*segcount, y=vek.y*segcount, z=vek.z*segcount}
 
 	-- nachträglich Schienen legen
@@ -516,6 +523,7 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 		end
 		-- Make corridor / Korridor graben
 		wp = corridor_func(wp,c,s, ud, up, wood, post, i == length, udn, damage)
+		if wp == false then return end
 		-- Verzweigung?
 		-- Fork?
 		if pr:next() < probability_fork then
