@@ -607,9 +607,13 @@ end
 minetest.register_on_generated(function(minp, maxp, blockseed)
 	InitRandomizer(blockseed)
 	if minp.y < height_max and maxp.y > height_min and pr:next() < probability_railcaves_in_chunk then
-		-- Mittelpunkt berechnen
+		-- Get semi-random height in chunk
+
+		local buffer = 5
+		local y = pr:next(minp.y + buffer, maxp.y - buffer)
+		y = math.floor(math.max(height_min, math.min(height_max, y)))
+
 		-- Mid point of the chunk
-		local y = math.floor(math.max(height_min, math.min(height_max, minp.y+(maxp.y-minp.y)/2)))
 		local p = {x=minp.x+(maxp.x-minp.x)/2, y=y, z=minp.z+(maxp.z-minp.z)/2}
 		-- Haupthöhle und alle weiteren
 		-- Corridors; starting with main cave out of dirt
