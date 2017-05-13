@@ -105,13 +105,15 @@ end
 -- or a liquid.
 local function SetNodeIfCanBuild(pos, node, check_above)
 	if check_above then
-		local abovedef = minetest.registered_nodes[minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z}).name]
-		if (abovedef.groups and abovedef.groups.attached_node) or abovedef.liquidtype ~= "none" then
+		local abovename = minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z}).name
+		local abovedef = minetest.registered_nodes[abovename]
+		if abovename == "unknown" or abovename == "ignore" or (abovedef.groups and abovedef.groups.attached_node) or abovedef.liquidtype ~= "none" then
 			return false
 		end
 	end
-	local def = minetest.registered_nodes[minetest.get_node(pos).name]
-	if def.is_ground_content and def.liquidtype == "none" then
+	local name = minetest.get_node(pos).name
+	local def = minetest.registered_nodes[name]
+	if name ~= "unknown" and name ~= "ignore" and def.is_ground_content and def.liquidtype == "none" then
 		minetest.set_node(pos, node)
 		return true
 	else
