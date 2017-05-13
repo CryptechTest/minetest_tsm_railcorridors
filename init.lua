@@ -100,16 +100,18 @@ end
 
 
 -- Checks if the mapgen is allowed to carve through this structure and only sets
--- the node if it is allowed.
--- If check_above is true, don't build if the node above is attached (e.g. rail).
+-- the node if it is allowed. Does never build in liquids.
+-- If check_above is true, don't build if the node above is attached (e.g. rail)
+-- or a liquid.
 local function SetNodeIfCanBuild(pos, node, check_above)
 	if check_above then
 		local abovedef = minetest.registered_nodes[minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z}).name]
-		if abovedef.groups and abovedef.groups.attached_node then
+		if (abovedef.groups and abovedef.groups.attached_node) or abovedef.liquidtype ~= "none" then
 			return false
 		end
 	end
-	if minetest.registered_nodes[minetest.get_node(pos).name].is_ground_content then
+	local def = minetest.registered_nodes[minetest.get_node(pos).name]
+	if def.is_ground_content and def.liquidtype == "none" then
 		minetest.set_node(pos, node)
 		return true
 	else
@@ -159,7 +161,7 @@ end
 local function Cube(p, radius, node)
 	local y_top = p.y+radius
 	local nodedef = minetest.registered_nodes[node.name]
-	local solid = nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular")
+	local solid = nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular") and nodedef.liquidtype == "none"
 	-- Check if all the nodes could be set
 	local built_all = true
 	for zi = p.z-radius, p.z+radius do
@@ -168,7 +170,7 @@ local function Cube(p, radius, node)
 				local ok = false
 				if not solid and yi == y_top then
 					local topdef = minetest.registered_nodes[minetest.get_node({x=xi,y=yi+1,z=zi}).name]
-					if not (topdef.groups and topdef.groups.attached_node) then
+					if not (topdef.groups and topdef.groups.attached_node) and topdef.liquidtype == "none" then
 						ok = true
 					end
 				else
