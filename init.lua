@@ -236,8 +236,8 @@ local function rci()
 	end
 end
 -- chests
-local function Place_Chest(pos)
-	if SetNodeIfCanBuild(pos, {name=tsm_railcorridors.nodes.chest}) then
+local function Place_Chest(pos, param2)
+	if SetNodeIfCanBuild(pos, {name=tsm_railcorridors.nodes.chest, param2=param2}) then
 		local meta = minetest.get_meta(pos)
 		local inv = meta:get_inventory()
 		for i=1, inv:get_size("main") do
@@ -442,7 +442,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 			if minetest.get_node({x=p.x+vek.z,y=p.y-1,z=p.z-vek.x}).name == post then
 				chestplace = chestplace + 1
 			else
-				Place_Chest({x=p.x+vek.z,y=p.y,z=p.z-vek.x})
+				Place_Chest({x=p.x+vek.z,y=p.y,z=p.z-vek.x}, minetest.dir_to_facedir(vek))
 			end
 		end
 	end
