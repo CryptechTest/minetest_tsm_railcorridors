@@ -198,6 +198,7 @@ local function Platform(p, radius, node)
 	end
 end
 
+
 -- Random chest items
 -- Zufälliger Kisteninhalt
 local function rci()
@@ -231,36 +232,7 @@ local function rci()
 			return ""
 		end
 	else
-		if pr:next(0,1000) < 30 then
-			return "farming:bread "..pr:next(1,3)
-		elseif pr:next(0,1000) < 50 then
-			if pr:next(0,1000) < 500 then
-				return "farming:seed_cotton "..pr:next(1,5)
-			else
-				return "farming:seed_wheat "..pr:next(1,5)
-			end
-		elseif pr:next(0,1000) < 5 then
-			return "tnt:tnt "..pr:next(1,3)
-		elseif pr:next(0,1000) < 5 then
-			return "default:pick_steel"
-		elseif pr:next(0,1000) < 3 then
-			local r = pr:next(0, 1000)
-			if r < 400 then
-				return "default:steel_ingot "..pr:next(1,5)
-			elseif r < 700 then
-				return "default:gold_ingot "..pr:next(1,3)
-			elseif r < 900 then
-				return "default:mese_crystal "..pr:next(1,3)
-			else
-				return "default:diamond "..pr:next(1,2)
-			end
-		elseif pr:next(0,1000) < 30 then
-			return "default:torch "..pr:next(1,16)
-		elseif pr:next(0,1000) < 20 then
-			return "default:coal_lump "..pr:next(3,8)
-		else
-			return ""
-		end
+		return tsm_railcorridors.get_default_treasure(pr)
 	end
 end
 -- chests
