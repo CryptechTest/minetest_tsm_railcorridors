@@ -93,8 +93,8 @@ local chaos_mode = minetest.setting_getbool("tsm_railcorridors_chaos") or false
 local pr
 local pr_initialized = false
 
-local function InitRandomizer(seeed)
-	pr = PseudoRandom(seeed)
+local function InitRandomizer(seed)
+	pr = PseudoRandom(seed)
 	pr_initialized = true
 end
 
@@ -595,10 +595,8 @@ local function place_corridors(main_cave_coords, psra)
 	end
 end
 
-minetest.register_on_generated(function(minp, maxp, seed)	
-	if not pr_initialized then
-		InitRandomizer(seed)
-	end
+minetest.register_on_generated(function(minp, maxp, blockseed)
+	InitRandomizer(blockseed)
 	if minp.y < height_max and maxp.y > height_min and pr:next() < probability_railcaves_in_chunk then
 		-- Mittelpunkt berechnen
 		-- Mid point of the chunk
