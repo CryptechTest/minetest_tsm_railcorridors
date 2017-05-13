@@ -443,6 +443,9 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 		local p = {x=waypoint.x+vek.x*i, y=waypoint.y+vek.y*i-1, z=waypoint.z+vek.z*i}
 		if (minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~=tsm_railcorridors.nodes.rail) then
 			p.y = p.y - 1;
+			if i == chestplace then
+				chestplace = chestplace + 1
+			end
 		end
 		if IsRailSurface({x=p.x,y=p.y-1,z=p.z}) then
 			PlaceRail(p, damage)
