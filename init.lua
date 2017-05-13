@@ -122,10 +122,10 @@ local function PlaceRail(pos, damage_chance)
 	if damage_chance ~= nil and damage_chance > 0 then
 		local x = pr:next(0,100)
 		if x <= damage_chance then
-			return
+			return false
 		end
 	end
-	SetNodeIfCanBuild(pos, {name=tsm_railcorridors.nodes.rail})
+	return SetNodeIfCanBuild(pos, {name=tsm_railcorridors.nodes.rail})
 end
 
 -- Returns true if the node as point can be considered “ground”, that is, a solid material
@@ -258,6 +258,9 @@ end
 -- Gänge mit Schienen
 -- Corridors with rails
 
+-- Returns <success>, <segments>
+-- success: true if corridor could be placed entirely
+-- segments: Number of segments successfully placed
 local function corridor_part(start_point, segment_vector, segment_count, wood, post, is_final)
 	local p = {x=start_point.x, y=start_point.y, z=start_point.z}
 	local torches = pr:next() < probability_torches_in_segment
@@ -274,7 +277,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	end
 	for segmentindex = 0, segment_count-1 do
 		local dug = Cube(p, 1, {name="air"})
-		if not chaos_mode and segmentindex > 0 and not dug then return end
+		if not chaos_mode and segmentindex > 0 and not dug then return false, segmentindex end
 		-- Add wooden platform, if neccessary. To avoid floating rails
 		if segment_vector.y == 0 then
 			Platform({x=p.x, y=p.y-1, z=p.z}, 1, node_wood)
@@ -365,10 +368,10 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	-- End of the corridor; create the final piece
 	if is_final then
 		local dug = Cube(p, 1, {name="air"})
-		if not chaos_mode and not dug then return false end
+		if not chaos_mode and not dug then return false, segment_count end
 		Platform({x=p.x, y=p.y-1, z=p.z}, 1, node_wood)
 	end
-	return true
+	return true, segment_count
 end
 
 local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, is_final, up_or_down_next, damage)
@@ -403,8 +406,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 	if up_or_down and up == false then
 		Cube(waypoint, 1, {name="air"})
 	end
-	local done = corridor_part(start, vek, segcount, wood, post, is_final)
-	if not chaos_mode and not done then return false end
+	local corridor_dug, corridor_segments_dug = corridor_part(start, vek, segcount, wood, post, is_final)
 	local corridor_vek = {x=vek.x*segcount, y=vek.y*segcount, z=vek.z*segcount}
 
 	-- nachträglich Schienen legen
@@ -425,14 +427,19 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 			vek.y = -1
 		end
 	end
-	if not up_or_down then
-		segcount = segcount * 3
-	end
 	local chestplace = -1
-	if not up_or_down and pr:next() < probability_chest then
+	if corridor_dug and not up_or_down and pr:next() < probability_chest then
 		chestplace = pr:next(1,segcount+1)
 	end
-	for i=1,segcount do
+	local railsegcount
+	if not chaos_mode and not corridor_dug then
+		railsegcount = corridor_segments_dug * 3
+	elseif not up_or_down then
+		railsegcount = segcount * 3
+	else
+		railsegcount = segcount
+	end
+	for i=1,railsegcount do
 		local p = {x=waypoint.x+vek.x*i, y=waypoint.y+vek.y*i-1, z=waypoint.z+vek.z*i}
 		if (minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~=tsm_railcorridors.nodes.rail) then
 			p.y = p.y - 1;
@@ -463,7 +470,11 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 			end
 		end
 	end
-	return final_point
+	if not corridor_dug then
+		return false
+	else
+		return final_point
+	end
 end
 
 local function start_corridor(waypoint, coord, sign, length, psra, wood, post, damage)
