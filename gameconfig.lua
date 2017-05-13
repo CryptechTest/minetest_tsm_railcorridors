@@ -2,7 +2,7 @@
 -- in which you need to change the node names.
 
 tsm_railcorridors.nodes = {
-	dirt = "default:dirt",
+	dirt = "mapgen_dirt",
 	chest = "default:chest",
 	rail = "default:rail",
 	torch_floor = "default:torch",
