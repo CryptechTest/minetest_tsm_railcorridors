@@ -213,7 +213,9 @@ local function rci()
 				treasures = treasurer.select_random_treasures(1,2,4,"seed")
 			end
 		elseif pr:next(0,1000) < 5 then
-			return "tnt:tnt "..pr:next(1,3)
+			if minetest.get_modpath("tnt") then
+				return "tnt:tnt "..pr:next(1,3)
+			end
 		elseif pr:next(0,1000) < 3 then
 			if pr:next(0,1000) < 800 then
 				treasures = treasurer.select_random_treasures(1,3,6,"mineral")
