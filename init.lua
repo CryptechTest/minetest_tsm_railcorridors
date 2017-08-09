@@ -15,7 +15,7 @@ end
 -- Wahrscheinlichkeit für jeden Chunk, solche Gänge mit Schienen zu bekommen
 -- Probability for every newly generated chunk to get corridors
 local probability_railcaves_in_chunk = P(0.33333)
-setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_railcaves_in_chunk"))
+setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_railcaves_in_chunk"))
 if setting then
 	probability_railcaves_in_chunk = P(setting)
 end
@@ -24,11 +24,11 @@ end
 -- Minimal and maximal value of path length (forks don't look up this value)
 local way_min = 4;
 local way_max = 7;
-setting = tonumber(minetest.setting_get("tsm_railcorridors_way_min"))
+setting = tonumber(minetest.settings:get("tsm_railcorridors_way_min"))
 if setting then
 	way_min = setting
 end
-setting = tonumber(minetest.setting_get("tsm_railcorridors_way_max"))
+setting = tonumber(minetest.settings:get("tsm_railcorridors_way_max"))
 if setting then
 	way_max = setting
 end
@@ -36,7 +36,7 @@ end
 -- Wahrsch. für jeden geraden Teil eines Korridors, Fackeln zu bekommen
 -- Probability for every horizontal part of a corridor to be with torches
 local probability_torches_in_segment = P(0.5)
-setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_torches_in_segment"))
+setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_torches_in_segment"))
 if setting then
 	probability_torches_in_segment = P(setting)
 end
@@ -44,7 +44,7 @@ end
 -- Wahrsch. für jeden Teil eines Korridors, nach oben oder nach unten zu gehen
 -- Probability for every part of a corridor to go up or down
 local probability_up_or_down = P(0.2)
-setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_up_or_down"))
+setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_up_or_down"))
 if setting then
 	probability_up_or_down = P(setting)
 end
@@ -52,7 +52,7 @@ end
 -- Wahrscheinlichkeit für jeden Teil eines Korridors, sich zu verzweigen – vorsicht, wenn fast jeder Gang sich verzweigt, kann der Algorithums unlösbar werden und MT hängt sich auf
 -- Probability for every part of a corridor to fork – caution, too high values may cause MT to hang on.
 local probability_fork = P(0.04)
-setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_fork"))
+setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_fork"))
 if setting then
 	probability_fork = P(setting)
 end
@@ -60,14 +60,14 @@ end
 -- Wahrscheinlichkeit für jeden geraden Teil eines Korridors eine Kiste zu enthalten
 -- Probability for every part of a corridor to contain a chest
 local probability_chest = P(0.05)
-setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_chest"))
+setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_chest"))
 if setting then
 	probability_chest = P(setting)
 end
 
 -- Probability for a rail corridor system to be damaged
 local probability_damage = P(0.55)
-setting = tonumber(minetest.setting_get("tsm_railcorridors_probability_damage"))
+setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_damage"))
 if setting then
 	probability_damage = P(setting)
 end
@@ -75,17 +75,17 @@ end
 -- Max. and min. heights between rail corridors are generated
 local height_min = -31000
 local height_max = -30
-setting = tonumber(minetest.setting_get("tsm_railcorridors_height_min"))
+setting = tonumber(minetest.settings:get("tsm_railcorridors_height_min"))
 if setting then
 	height_min = setting
 end
-setting = tonumber(minetest.setting_get("tsm_railcorridors_height_max"))
+setting = tonumber(minetest.settings:get("tsm_railcorridors_height_max"))
 if setting then
 	height_max = setting
 end
 
 -- Chaos Mode: If enabled, rail corridors don't stop generating when hitting obstacles
-local chaos_mode = minetest.setting_getbool("tsm_railcorridors_chaos") or false
+local chaos_mode = minetest.settings:get_bool("tsm_railcorridors_chaos") or false
 
 -- Parameter Ende
 
