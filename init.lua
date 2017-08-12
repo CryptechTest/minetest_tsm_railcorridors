@@ -614,7 +614,7 @@ minetest.register_on_generated(function(minp, maxp, blockseed)
 		y = math.floor(math.max(height_min, math.min(height_max, y)))
 
 		-- Mid point of the chunk
-		local p = {x=minp.x+(maxp.x-minp.x)/2, y=y, z=minp.z+(maxp.z-minp.z)/2}
+		local p = {x=minp.x+math.floor((maxp.x-minp.x)/2), y=y, z=minp.z+math.floor((maxp.z-minp.z)/2)}
 		-- Haupthöhle und alle weiteren
 		-- Corridors; starting with main cave out of dirt
 		place_corridors(p, pr)
