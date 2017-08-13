@@ -369,10 +369,10 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 		p = vector.add(p, segment_vector)
 	end
 
-	-- End of the corridor; create the final piece
-	if is_final then
-		local dug = Cube(p, 1, {name="air"})
-		if not chaos_mode and not dug then return false, segment_count end
+	-- End of the corridor segment; create the final piece
+	local dug = Cube(p, 1, {name="air"})
+	if not chaos_mode and not dug then return false, segment_count end
+	if segment_vector.y == 0 then
 		Platform({x=p.x, y=p.y-1, z=p.z}, 1, node_wood)
 	end
 	return true, segment_count
