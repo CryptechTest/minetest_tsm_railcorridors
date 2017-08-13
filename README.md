@@ -1,6 +1,6 @@
 # Railway corridors for Treasurer [`tsm_railcorridors`]
 
-* Current version 0.11.0
+* Current version 0.12.0
 
 Minetest mod for adding underground corridors with rails and wood constructions with
 a few treasure chests now and then. Optional Treasurer support is available for adding
