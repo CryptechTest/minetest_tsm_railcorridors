@@ -460,6 +460,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 				chestplace = chestplace + 1
 			end
 		end
+		-- Main rail; this places almost all the rails
 		if IsRailSurface({x=p.x,y=p.y-1,z=p.z}) then
 			PlaceRail(p, damage)
 		end
@@ -481,6 +482,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 		else
 			offset[coord] = offset[coord] + segamount
 			final_point = vector.add(waypoint, offset)
+			-- After going up or down, 1 missing rail piece must be added
 			if IsRailSurface({x=final_point.x,y=final_point.y-2,z=final_point.z}) then
 				PlaceRail({x=final_point.x,y=final_point.y-1,z=final_point.z}, damage)
 			end
@@ -503,12 +505,9 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 	local up
 	for i=1,length do
 		local needs_platform
-		-- Up or down?
-		if ud then
-			udp = true
-		else
-			udp = false
-		end
+		-- Update previous up/down status
+		udp = ud
+		-- Update current up/down status
 		if udn then
 			needs_platform = NeedsPlatform(wp)
 			if needs_platform then
@@ -527,7 +526,7 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 		else
 			ud = false
 		end
-		-- Update up/down next
+		-- Update next up/down status
 		if pr:next() < probability_up_or_down and i~=1 and not udn and not needs_platform then
 			udn = i < length
 		elseif udn and not needs_platform then
@@ -578,11 +577,13 @@ local function place_corridors(main_cave_coords, psra)
 	if pr:next(0, 100) < 50 then
 		Cube(main_cave_coords, 4, {name=tsm_railcorridors.nodes.dirt})
 		Cube(main_cave_coords, 3, {name="air"})
+		-- Center rail
 		PlaceRail({x=main_cave_coords.x, y=main_cave_coords.y-3, z=main_cave_coords.z}, damage)
 		main_cave_coords.y =main_cave_coords.y - 1
 	else
 		Cube(main_cave_coords, 3, {name=tsm_railcorridors.nodes.dirt})
 		Cube(main_cave_coords, 2, {name="air"})
+		-- Center rail
 		PlaceRail({x=main_cave_coords.x, y=main_cave_coords.y-2, z=main_cave_coords.z}, damage)
 	end
 	local xs = pr:next(0, 2) < 1
