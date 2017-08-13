@@ -265,7 +265,7 @@ end
 -- Returns <success>, <segments>
 -- success: true if corridor could be placed entirely
 -- segments: Number of segments successfully placed
-local function corridor_part(start_point, segment_vector, segment_count, wood, post, is_final)
+local function corridor_part(start_point, segment_vector, segment_count, wood, post, is_final, up_or_down_prev)
 	local p = {x=start_point.x, y=start_point.y, z=start_point.z}
 	local torches = pr:next() < probability_torches_in_segment
 	local dir = {0, 0}
@@ -284,7 +284,16 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 		if not chaos_mode and segmentindex > 0 and not dug then return false, segmentindex end
 		-- Add wooden platform, if neccessary. To avoid floating rails
 		if segment_vector.y == 0 then
-			Platform({x=p.x, y=p.y-1, z=p.z}, 1, node_wood)
+			if segmentindex == 0 and up_or_down_prev then
+				-- Thin 1×1 platform directly after going up or down.
+				-- This is done to avoid placing too much wood at slopes
+				Platform({x=p.x-dir[2], y=p.y-1, z=p.z-dir[1]}, 0, node_wood)
+				Platform({x=p.x, y=p.y-1, z=p.z}, 0, node_wood)
+				Platform({x=p.x+dir[2], y=p.y-1, z=p.z+dir[1]}, 0, node_wood)
+			else
+				-- Normal 3×3 platform
+				Platform({x=p.x, y=p.y-1, z=p.z}, 1, node_wood)
+			end
 		end
 		-- Diese komischen Holz-Konstruktionen
 		-- These strange wood structs
@@ -378,7 +387,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	return true, segment_count
 end
 
-local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, is_final, up_or_down_next, damage)
+local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next, up_or_down_prev, up, wood, post, is_final, damage)
 	local segamount = 3
 	if up_or_down then
 		segamount = 1
@@ -410,7 +419,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up, wood, post, 
 	if up_or_down and up == false then
 		Cube(waypoint, 1, {name="air"})
 	end
-	local corridor_dug, corridor_segments_dug = corridor_part(start, vek, segcount, wood, post, is_final)
+	local corridor_dug, corridor_segments_dug = corridor_part(start, vek, segcount, wood, post, is_final, up_or_down_prev)
 	local corridor_vek = {x=vek.x*segcount, y=vek.y*segcount, z=vek.z*segcount}
 
 	-- nachträglich Schienen legen
@@ -490,10 +499,16 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 	local s = sign
 	local ud = false -- up or down
 	local udn = false -- up or down is next
+	local udp = false -- up or down was previous
 	local up
 	for i=1,length do
 		local needs_platform
 		-- Up or down?
+		if ud then
+			udp = true
+		else
+			udp = false
+		end
 		if udn then
 			needs_platform = NeedsPlatform(wp)
 			if needs_platform then
@@ -519,7 +534,7 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 			udn = false
 		end
 		-- Make corridor / Korridor graben
-		wp = corridor_func(wp,c,s, ud, up, wood, post, i == length, udn, damage)
+		wp = corridor_func(wp,c,s, ud, udn, udp, up, wood, post, i == length, damage)
 		if wp == false then return end
 		-- Verzweigung?
 		-- Fork?
