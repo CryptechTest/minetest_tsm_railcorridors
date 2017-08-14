@@ -567,6 +567,20 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	for i=1,railsegcount do
 		local p = {x=waypoint.x+vek.x*i, y=waypoint.y+vek.y*i-1, z=waypoint.z+vek.z*i}
 
+		-- Randomly returns either the left or right side of the main rail.
+		-- Also returns offset as second return value.
+		local left_or_right = function(pos, vek)
+			local off, facedir
+			if pr:next(1, 2) == 1 then
+				-- left
+				off = {x = -vek.z, y= 0, z = vek.x}
+			else
+				-- right
+				off = {x=vek.z, y= 0, z= -vek.x}
+			end
+			return vector.add(pos, off), off
+		end
+
 		if (minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~=tsm_railcorridors.nodes.rail) then
 			p.y = p.y - 1;
 			if i == chestplace then
@@ -579,19 +593,20 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 
 		-- Chest
 		if i == chestplace then
-			if minetest.get_node({x=p.x+vek.z,y=p.y,z=p.z-vek.x}).name == post then
+			local cpos, offset = left_or_right(p, vek)
+			if minetest.get_node(cpos).name == post then
 				chestplace = chestplace + 1
 			else
-				PlaceChest({x=p.x+vek.z,y=p.y,z=p.z-vek.x}, minetest.dir_to_facedir(vek))
+				PlaceChest(cpos, minetest.dir_to_facedir(offset))
 			end
 		end
 
 		-- Rail and cart
 		if i == cartplace then
-			if minetest.get_node({x=p.x+vek.z,y=p.y,z=p.z-vek.x}).name == post then
+			local cpos = left_or_right(p, vek)
+			if minetest.get_node(cpos).name == post then
 				cartplace = cartplace + 1
 			else
-				local cpos = {x=p.x+vek.z,y=p.y,z=p.z-vek.x}
 				local placed = PlaceRail(cpos, damage)
 				if placed then
 					local cart_type = pr:next(1, #tsm_railcorridors.carts)
