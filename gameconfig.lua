@@ -21,6 +21,10 @@ tsm_railcorridors.nodes = {
 	},
 }
 
+if minetest.get_modpath("mobs") then
+	tsm_railcorridors.nodes.cobweb = "mobs:cobweb"
+end
+
 -- Fallback function. Returns a random treasure. This function is called for chests
 -- only if the Treasurer mod is not found.
 -- pr: A PseudoRandom object

@@ -89,12 +89,16 @@ local chaos_mode = minetest.settings:get_bool("tsm_railcorridors_chaos") or fals
 
 -- Parameter Ende
 
--- random generator
-local pr
+-- Random generators
+local pr, webperlin_major, webperlin_minor
 local pr_initialized = false
 
 local function InitRandomizer(seed)
+	-- Mostly used for corridor gen.
 	pr = PseudoRandom(seed)
+	-- Used for cobweb generation, both noises have to reach a high value for cobwebs to appear
+	webperlin_major = PerlinNoise(934, 3, 0.6, 500)
+	webperlin_minor = PerlinNoise(834, 3, 0.6, 50)
 	pr_initialized = true
 end
 
@@ -107,13 +111,17 @@ local function SetNodeIfCanBuild(pos, node, check_above)
 	if check_above then
 		local abovename = minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z}).name
 		local abovedef = minetest.registered_nodes[abovename]
-		if abovename == "unknown" or abovename == "ignore" or (abovedef.groups and abovedef.groups.attached_node) or abovedef.liquidtype ~= "none" then
+		if abovename == "unknown" or abovename == "ignore" or
+				(abovedef.groups and abovedef.groups.attached_node) or
+				-- This is done because cobwebs are often fake liquids
+				(abovedef.liquidtype ~= "none" and abovename ~= tsm_railcorridors.nodes.cobweb) then
 			return false
 		end
 	end
 	local name = minetest.get_node(pos).name
 	local def = minetest.registered_nodes[name]
-	if name ~= "unknown" and name ~= "ignore" and def.is_ground_content and def.liquidtype == "none" then
+	if name ~= "unknown" and name ~= "ignore" and def.is_ground_content and
+			(def.liquidtype == "none" or name == tsm_railcorridors.nodes.cobweb) then
 		minetest.set_node(pos, node)
 		return true
 	else
@@ -242,13 +250,50 @@ local function rci()
 	end
 end
 -- chests
-local function Place_Chest(pos, param2)
+local function PlaceChest(pos, param2)
 	if SetNodeIfCanBuild(pos, {name=tsm_railcorridors.nodes.chest, param2=param2}) then
 		local meta = minetest.get_meta(pos)
 		local inv = meta:get_inventory()
 		for i=1, inv:get_size("main") do
 			inv:set_stack("main", i, ItemStack(rci()))
 		end
+	end
+end
+
+-- Try to place a cobweb.
+-- pos: Position of cobweb
+-- needs_check: If true, checks if any of the nodes above, below or to the side of the cobweb.
+-- side_vector: Required if needs_check is true. Unit vector which points towards the side of the cobweb to place.
+local function TryPlaceCobweb(pos, needs_check, side_vector)
+	local check_passed = false
+	if needs_check then
+		-- Check for walkable nodes above, below or at the side of the cobweb.
+		-- If any of those nodes is walkable, we are fine.
+		local check_vectors = {
+			side_vector,
+			{x=0, y=1, z=0},
+			{x=0, y=-1, z=0},
+		}
+
+		for c=1, #check_vectors do
+
+			local cpos = vector.add(pos, check_vectors[c])
+			local cname = minetest.get_node(cpos).name
+			local cdef = minetest.registered_nodes[cname]
+			if cname ~= "ignore" and cdef.walkable then
+				check_passed = true
+				break
+			end
+		end
+
+	else
+		check_passed = true
+	end
+
+	if check_passed then
+		return SetNodeIfCanBuild(pos, {name=tsm_railcorridors.nodes.cobweb})
+	else
+		return false
 	end
 end
 	
@@ -468,8 +513,37 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 			if minetest.get_node({x=p.x+vek.z,y=p.y-1,z=p.z-vek.x}).name == post then
 				chestplace = chestplace + 1
 			else
-				Place_Chest({x=p.x+vek.z,y=p.y,z=p.z-vek.x}, minetest.dir_to_facedir(vek))
+				PlaceChest({x=p.x+vek.z,y=p.y,z=p.z-vek.x}, minetest.dir_to_facedir(vek))
 			end
+		end
+		-- Place cobwebs left and right in the corridor
+		if tsm_railcorridors.nodes.cobweb then
+			-- Helper function to place a cobweb at the side (based on chance an Perlin noise)
+			local cobweb_at_side = function(basepos, vek)
+				if pr:next(1,5) == 1 then
+					local h = pr:next(0, 2) -- 3 possible cobweb heights
+					local cpos = {x=basepos.x+vek.x, y=basepos.y+h, z=basepos.z+vek.z}
+					if webperlin_major:get3d(cpos) > 0.05 and webperlin_minor:get3d(cpos) > 0.1 then
+						if h == 0 then
+							-- No check neccessary at height offset 0 since the cobweb is on the floor
+							return TryPlaceCobweb(cpos)
+						else
+							-- Check nessessary
+							return TryPlaceCobweb(cpos, true, vek)
+						end
+					end
+				end
+				return false
+			end
+
+			-- Right cobweb
+			local rvek = {x=-vek.z, y=0, z=vek.x}
+			cobweb_at_side(p, rvek)
+
+			-- Left cobweb
+			local lvek = {x=vek.z, y=0, z=-vek.x}
+			cobweb_at_side(p, lvek)
+
 		end
 	end
 	
