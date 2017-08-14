@@ -287,6 +287,39 @@ local function PlaceChest(pos, param2)
 	end
 end
 
+-- This function checks if a cart has ACTUALLY been spawned.
+-- If not, it tries to spawn it again, and again, until it succeeded or
+-- it failed too often.
+-- To be calld by minetest.after.
+-- This is a HORRIBLE workaround thanks to the fact that minetest.add_entity is unreliable as fuck
+-- See: https://github.com/minetest/minetest/issues/4759
+-- FIXME: Kill this horrible hack with fire as soon you can.
+local function RecheckCartHack(params)
+	local pos = params[1]
+	local cart_id = params[2]
+	local tries = params[3]
+	tries = tries - 1
+	-- Find cart
+	for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 1)) do
+		if obj ~= nil and obj:get_luaentity().name == cart_id then
+			-- Cart found! We can now safely call the callback func.
+			-- (calling it earlier has the danger of failing)
+			tsm_railcorridors.on_construct_cart(pos, obj)
+			return
+		end
+	end
+	if tries <= 0 then
+		-- Abort if too many tries to avoid excessive function calls
+		return
+	end
+	-- No cart found! :-( Try again …
+	if minetest.get_node(pos).name == tsm_railcorridors.nodes.rail then
+		minetest.add_entity(pos, cart_id)
+		minetest.after(5, RecheckCartHack, {pos, cart_id, tries})
+	end
+	-- The rail may have been destroyed in the meantime, that's why the node is checked.
+end
+
 -- Try to place a cobweb.
 -- pos: Position of cobweb
 -- needs_check: If true, checks if any of the nodes above, below or to the side of the cobweb.
@@ -563,10 +596,15 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 				if placed then
 					local cart_type = pr:next(1, #tsm_railcorridors.carts)
 					-- FIXME: The cart sometimes fails to spawn
-					local cart = minetest.add_entity(cpos, tsm_railcorridors.carts[cart_type])
-					if cart then
-						tsm_railcorridors.on_construct_cart(cpos, cart)
-					end
+					-- See <https://github.com/minetest/minetest/issues/4759>
+					local cart_id = tsm_railcorridors.carts[cart_type]
+					local cart = minetest.add_entity(cpos, cart_id)
+
+					-- This checks if the cart is actually spawned, it's a giant hack!
+					-- Note that the callback function is also called there.
+					-- TODO: Move callback function to this position when the
+					-- minetest.add_entity bug has been fixed.
+					minetest.after(2, RecheckCartHack, {cpos, cart_id, 10})
 				end
 			end
 		end
