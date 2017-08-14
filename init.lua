@@ -613,7 +613,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	end
 end
 
-local function start_corridor(waypoint, coord, sign, length, psra, wood, post, damage)
+local function start_corridor(waypoint, coord, sign, length, psra, wood, post, damage, no_spawner)
 	local wp = waypoint
 	local c = coord
 	local s = sign
@@ -621,7 +621,6 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 	local udn = false -- up or down is next
 	local udp = false -- up or down was previous
 	local up
-	local no_spawner = false
 	for i=1,length do
 		local needs_platform
 		-- Update previous up/down status
@@ -658,10 +657,10 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 		-- Fork?
 		if pr:next() < probability_fork then
 			local p = {x=wp.x, y=wp.y, z=wp.z}
-			start_corridor(wp, c, s, pr:next(way_min,way_max), psra, wood, post, damage)
+			start_corridor(wp, c, s, pr:next(way_min,way_max), psra, wood, post, damage, no_spawner)
 			if c == "x" then c="z" else c="x" end
-			start_corridor(wp, c, s, pr:next(way_min,way_max), psra, wood, post, damage)
-			start_corridor(wp, c, not s, pr:next(way_min,way_max), psra, wood, post, damage)
+			start_corridor(wp, c, s, pr:next(way_min,way_max), psra, wood, post, damage, no_spawner)
+			start_corridor(wp, c, not s, pr:next(way_min,way_max), psra, wood, post, damage, no_spawner)
 			WoodBulk({x=p.x, y=p.y-1, z=p.z}, wood)
 			WoodBulk({x=p.x, y=p.y,   z=p.z}, wood)
 			WoodBulk({x=p.x, y=p.y+1, z=p.z}, wood)
@@ -727,15 +726,15 @@ local function place_corridors(main_cave_coords, psra)
 	end
 	local wood = tsm_railcorridors.nodes.corridor_woods[woodtype].wood
 	local post = tsm_railcorridors.nodes.corridor_woods[woodtype].post
-	start_corridor(main_cave_coords, "x", xs, pr:next(way_min,way_max), psra, wood, post, damage)
-	start_corridor(main_cave_coords, "z", zs, pr:next(way_min,way_max), psra, wood, post, damage)
+	start_corridor(main_cave_coords, "x", xs, pr:next(way_min,way_max), psra, wood, post, damage, false)
+	start_corridor(main_cave_coords, "z", zs, pr:next(way_min,way_max), psra, wood, post, damage, false)
 	-- Auch mal die andere Richtung?
 	-- Try the other direction?
 	if pr:next(0, 100) < 70 then
-		start_corridor(main_cave_coords, "x", not xs, pr:next(way_min,way_max), psra, wood, post, damage)
+		start_corridor(main_cave_coords, "x", not xs, pr:next(way_min,way_max), psra, wood, post, damage, false)
 	end
 	if pr:next(0, 100) < 70 then
-		start_corridor(main_cave_coords, "z", not zs, pr:next(way_min,way_max), psra, wood, post, damage)
+		start_corridor(main_cave_coords, "z", not zs, pr:next(way_min,way_max), psra, wood, post, damage, false)
 	end
 end
 
