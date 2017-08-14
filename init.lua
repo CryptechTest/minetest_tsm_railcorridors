@@ -168,7 +168,7 @@ end
 -- * Avoids floating rails for non-solid nodes like air
 -- Returns true if all nodes could be set
 -- Returns false if setting one or more nodes failed
-local function Cube(p, radius, node)
+local function Cube(p, radius, node, replace_air_only)
 	local y_top = p.y+radius
 	local nodedef = minetest.registered_nodes[node.name]
 	local solid = nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular") and nodedef.liquidtype == "none"
@@ -188,7 +188,13 @@ local function Cube(p, radius, node)
 				end
 				local built = false
 				if ok then
-					built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, node)
+					if replace_air_only ~= true then
+						built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, node)
+					else
+						if minetest.get_node({x=xi,y=yi,z=zi}).name == "air" then
+							built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, node)
+						end
+					end
 				end
 				if not built then
 					built_all = false
@@ -486,6 +492,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 		end
 	end
 	local chestplace = -1
+	local corridor_has_spawner = false -- Up to only 1 spawner per corridor
 	if corridor_dug and not up_or_down and pr:next() < probability_chest then
 		chestplace = pr:next(1,segcount+1)
 	end
@@ -498,6 +505,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 		railsegcount = segcount
 	end
 	for i=1,railsegcount do
+		-- Precalculate chest position
 		local p = {x=waypoint.x+vek.x*i, y=waypoint.y+vek.y*i-1, z=waypoint.z+vek.z*i}
 		if (minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~=tsm_railcorridors.nodes.rail) then
 			p.y = p.y - 1;
@@ -505,10 +513,8 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 				chestplace = chestplace + 1
 			end
 		end
-		-- Main rail; this places almost all the rails
-		if IsRailSurface({x=p.x,y=p.y-1,z=p.z}) then
-			PlaceRail(p, damage)
-		end
+
+		-- Chest
 		if i == chestplace then
 			if minetest.get_node({x=p.x+vek.z,y=p.y-1,z=p.z-vek.x}).name == post then
 				chestplace = chestplace + 1
@@ -516,6 +522,28 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 				PlaceChest({x=p.x+vek.z,y=p.y,z=p.z-vek.x}, minetest.dir_to_facedir(vek))
 			end
 		end
+
+		-- Mob spawner (at center)
+		if tsm_railcorridors.nodes.spawner and not corridor_has_spawner and webperlin_major:get3d(p) > 0.3 and webperlin_minor:get3d(p) > 0.5 then
+			-- Place spawner (if activated in gameconfig),
+			-- enclose in cobwebs and setup the spawner node.
+			local spawner_placed = SetNodeIfCanBuild(p, {name=tsm_railcorridors.nodes.spawner})
+			if spawner_placed then
+				local size = 1
+				if webperlin_major:get3d(p) > 0.5 then
+					size = 2
+				end
+				Cube(p, size, {name=tsm_railcorridors.nodes.cobweb}, true)
+				tsm_railcorridors.on_construct_spawner(p)
+				corridor_has_spawner = true
+			end
+		end
+
+		-- Main rail; this places almost all the rails
+		if IsRailSurface({x=p.x,y=p.y-1,z=p.z}) then
+			PlaceRail(p, damage)
+		end
+
 		-- Place cobwebs left and right in the corridor
 		if tsm_railcorridors.nodes.cobweb then
 			-- Helper function to place a cobweb at the side (based on chance an Perlin noise)

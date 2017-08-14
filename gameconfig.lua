@@ -23,6 +23,17 @@ tsm_railcorridors.nodes = {
 
 if minetest.get_modpath("mobs") then
 	tsm_railcorridors.nodes.cobweb = "mobs:cobweb"
+
+	-- This is for subgames to add their spawner node. No spawner is added by default
+	-- because Mobs Redo's mob spawner is still unfinished.
+	-- If you set this, you MUST also set tsm_railcorridors.place_spawner.
+	tsm_railcorridors.nodes.spawner = nil
+end
+
+-- This is called after a spawner has been placed by the game.
+-- Use this to properly set up the metadata and stuff.
+-- This is needed for subgames if they include mob spawners.
+function tsm_railcorridors.on_construct_spawner(pos)
 end
 
 -- Fallback function. Returns a random treasure. This function is called for chests
@@ -60,3 +71,5 @@ function tsm_railcorridors.get_default_treasure(pr)
 		return ""
 	end
 end
+
+
