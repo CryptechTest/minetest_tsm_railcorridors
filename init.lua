@@ -548,7 +548,9 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 				if webperlin_major:get3d(p) > 0.5 then
 					size = 2
 				end
-				Cube(p, size, {name=tsm_railcorridors.nodes.cobweb}, true)
+				if place_cobwebs then
+					Cube(p, size, {name=tsm_railcorridors.nodes.cobweb}, true)
+				end
 				tsm_railcorridors.on_construct_spawner(p)
 				corridor_has_spawner = true
 			end
@@ -744,7 +746,7 @@ minetest.register_on_generated(function(minp, maxp, blockseed)
 
 		local buffer = 5
 		local y = pr:next(minp.y + buffer, maxp.y - buffer)
-		y = math.floor(math.max(height_min, math.min(height_max, y)))
+		y = math.floor(math.max(height_min + buffer, math.min(height_max - buffer, y)))
 
 		-- Mid point of the chunk
 		local p = {x=minp.x+math.floor((maxp.x-minp.x)/2), y=y, z=minp.z+math.floor((maxp.z-minp.z)/2)}
