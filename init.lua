@@ -452,7 +452,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	return true, segment_count
 end
 
-local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next, up_or_down_prev, up, wood, post, is_final, damage)
+local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next, up_or_down_prev, up, wood, post, is_final, damage, no_spawner)
 	local segamount = 3
 	if up_or_down then
 		segamount = 1
@@ -506,7 +506,6 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 		end
 	end
 	local chestplace = -1
-	local corridor_has_spawner = false -- Up to only 1 spawner per corridor
 	if corridor_dug and not up_or_down and pr:next() < probability_chest then
 		chestplace = pr:next(1,segcount+1)
 	end
@@ -538,7 +537,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 		end
 
 		-- Mob spawner (at center)
-		if place_mob_spawners and tsm_railcorridors.nodes.spawner and not corridor_has_spawner and
+		if place_mob_spawners and tsm_railcorridors.nodes.spawner and not no_spawner and
 				webperlin_major:get3d(p) > 0.3 and webperlin_minor:get3d(p) > 0.5 then
 			-- Place spawner (if activated in gameconfig),
 			-- enclose in cobwebs and setup the spawner node.
@@ -552,7 +551,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 					Cube(p, size, {name=tsm_railcorridors.nodes.cobweb}, true)
 				end
 				tsm_railcorridors.on_construct_spawner(p)
-				corridor_has_spawner = true
+				no_spawner = true
 			end
 		end
 
@@ -608,9 +607,9 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 		end
 	end
 	if not corridor_dug then
-		return false
+		return false, no_spawner
 	else
-		return final_point
+		return final_point, no_spawner
 	end
 end
 
@@ -622,6 +621,7 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 	local udn = false -- up or down is next
 	local udp = false -- up or down was previous
 	local up
+	local no_spawner = false
 	for i=1,length do
 		local needs_platform
 		-- Update previous up/down status
@@ -652,7 +652,7 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 			udn = false
 		end
 		-- Make corridor / Korridor graben
-		wp = corridor_func(wp,c,s, ud, udn, udp, up, wood, post, i == length, damage)
+		wp, no_spawner = corridor_func(wp,c,s, ud, udn, udp, up, wood, post, i == length, damage, no_spawner)
 		if wp == false then return end
 		-- Verzweigung?
 		-- Fork?
