@@ -2,4 +2,4 @@ default
 tnt
 farming
 treasurer?
-mobs?
+mobs_monster?

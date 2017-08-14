@@ -5,7 +5,7 @@
 Minetest mod for adding underground corridors with rails and wood constructions with
 a few treasure chests now and then. Optional Treasurer support is available for adding
 treasures from various mods.
-Cobwebs are added if the Mobs Redo [mobs] mod is found.
+Cobwebs are added if the `mobs_monster` mod is found.
 
 Use the advanced settings to finetune the railway corridors.
 

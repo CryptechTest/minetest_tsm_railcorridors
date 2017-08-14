@@ -21,7 +21,7 @@ tsm_railcorridors.nodes = {
 	},
 }
 
-if minetest.get_modpath("mobs") then
+if minetest.get_modpath("mobs_monster") then
 	tsm_railcorridors.nodes.cobweb = "mobs:cobweb"
 
 	-- This is for subgames to add their spawner node. No spawner is added by default
