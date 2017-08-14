@@ -370,7 +370,7 @@ end
 -- Returns <success>, <segments>
 -- success: true if corridor could be placed entirely
 -- segments: Number of segments successfully placed
-local function corridor_part(start_point, segment_vector, segment_count, wood, post, is_final, up_or_down_prev)
+local function corridor_part(start_point, segment_vector, segment_count, wood, post, first_or_final, up_or_down_prev)
 	local p = {x=start_point.x, y=start_point.y, z=start_point.z}
 	local torches = pr:next() < probability_torches_in_segment
 	local dir = {0, 0}
@@ -492,7 +492,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	return true, segment_count
 end
 
-local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next, up_or_down_prev, up, wood, post, is_final, damage, no_spawner)
+local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next, up_or_down_prev, up, wood, post, first_or_final, damage, no_spawner)
 	local segamount = 3
 	if up_or_down then
 		segamount = 1
@@ -524,7 +524,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	if up_or_down and up == false then
 		Cube(waypoint, 1, {name="air"})
 	end
-	local corridor_dug, corridor_segments_dug = corridor_part(start, vek, segcount, wood, post, is_final, up_or_down_prev)
+	local corridor_dug, corridor_segments_dug = corridor_part(start, vek, segcount, wood, post, first_or_final, up_or_down_prev)
 	local corridor_vek = {x=vek.x*segcount, y=vek.y*segcount, z=vek.z*segcount}
 
 	-- nachträglich Schienen legen
@@ -548,12 +548,18 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	-- Calculate chest and cart position
 	local chestplace = -1
 	local cartplace = -1
+	local minseg
+	if first_or_final == "first" then
+		minseg = 2
+	else
+		minseg = 1
+	end
 	if corridor_dug and not up_or_down then
 		if pr:next() < probability_chest then
-			chestplace = pr:next(1,segcount+1)
+			chestplace = pr:next(minseg, segcount+1)
 		end
 		if tsm_railcorridors.carts and #tsm_railcorridors.carts > 0 and pr:next() < probability_cart then
-			cartplace = pr:next(1,segcount+1)
+			cartplace = pr:next(minseg, segcount+1)
 		end
 	end
 	local railsegcount
@@ -739,7 +745,13 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 			udn = false
 		end
 		-- Make corridor / Korridor graben
-		wp, no_spawner = corridor_func(wp,c,s, ud, udn, udp, up, wood, post, i == length, damage, no_spawner)
+		local first_or_final
+		if i == length then
+			first_or_final = "final"
+		elseif i == 1 then
+			first_or_final = "first"
+		end
+		wp, no_spawner = corridor_func(wp,c,s, ud, udn, udp, up, wood, post, first_or_final, damage, no_spawner)
 		if wp == false then return end
 		-- Verzweigung?
 		-- Fork?
