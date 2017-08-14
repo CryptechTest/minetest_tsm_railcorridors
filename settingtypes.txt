@@ -21,6 +21,8 @@ tsm_railcorridors_probability_fork (Fork probability) float 0.04 0.0 1.0
 tsm_railcorridors_probability_chest (Chest probability) float 0.05 0.0 1.0
 
 #Probability (0.0 to 1.0) for every part of a rail corridor to include a cart.
+#Note: The rail may still be subject to rail damage, so the probability
+#of finding a cart in rail corridors with high rail damage will be lower.
 tsm_railcorridors_probability_cart (Cart probability) float 0.05 0.0 1.0
 
 #If enabled, cobwebs may be placed in some corridors.
