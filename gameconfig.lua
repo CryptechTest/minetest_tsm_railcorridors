@@ -5,7 +5,7 @@
 tsm_railcorridors.nodes = {
 	dirt = "default:dirt",
 	chest = "default:chest",
-	rail = "default:rail",
+	rail = "carts:rail",
 	torch_floor = "default:torch",
 	torch_wall = "default:torch_wall",
 

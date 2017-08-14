@@ -316,6 +316,7 @@ local function RecheckCartHack(params)
 	if minetest.get_node(pos).name == tsm_railcorridors.nodes.rail then
 		minetest.add_entity(pos, cart_id)
 		minetest.after(5, RecheckCartHack, {pos, cart_id, tries})
+		return
 	end
 	-- The rail may have been destroyed in the meantime, that's why the node is checked.
 end
@@ -625,7 +626,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 					-- Note that the callback function is also called there.
 					-- TODO: Move callback function to this position when the
 					-- minetest.add_entity bug has been fixed.
-					minetest.after(2, RecheckCartHack, {cpos, cart_id, 10})
+					minetest.after(3, RecheckCartHack, {cpos, cart_id, 12})
 				end
 			end
 		end
