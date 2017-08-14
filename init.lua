@@ -66,7 +66,7 @@ if setting then
 end
 
 -- Probability for every part of a corridor to contain a cart
-local probability_cart = P(0.025)
+local probability_cart = P(0.05)
 setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_cart"))
 if setting then
 	probability_cart = P(setting)
