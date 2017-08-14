@@ -21,6 +21,12 @@ tsm_railcorridors.nodes = {
 	},
 }
 
+-- List of cart entities. Carts will be placed randomly of the right-hand or left side of
+-- the main rail.
+tsm_railcorridors.carts = {
+	"carts:cart",
+}
+
 if minetest.get_modpath("mobs_monster") then
 	tsm_railcorridors.nodes.cobweb = "mobs:cobweb"
 

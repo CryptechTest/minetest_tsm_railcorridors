@@ -65,6 +65,13 @@ if setting then
 	probability_chest = P(setting)
 end
 
+-- Probability for every part of a corridor to contain a cart
+local probability_cart = P(0.025)
+setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_cart"))
+if setting then
+	probability_cart = P(setting)
+end
+
 -- Probability for a rail corridor system to be damaged
 local probability_damage = P(0.55)
 setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_damage"))
@@ -505,9 +512,16 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 			vek.y = -1
 		end
 	end
+	-- Calculate chest and cart position
 	local chestplace = -1
-	if corridor_dug and not up_or_down and pr:next() < probability_chest then
-		chestplace = pr:next(1,segcount+1)
+	local cartplace = -1
+	if corridor_dug and not up_or_down then
+		if pr:next() < probability_chest then
+			chestplace = pr:next(1,segcount+1)
+		end
+		if tsm_railcorridors.carts and #tsm_railcorridors.carts > 0 and pr:next() < probability_cart then
+			cartplace = pr:next(1,segcount+1)
+		end
 	end
 	local railsegcount
 	if not chaos_mode and not corridor_dug then
@@ -518,21 +532,39 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 		railsegcount = segcount
 	end
 	for i=1,railsegcount do
-		-- Precalculate chest position
 		local p = {x=waypoint.x+vek.x*i, y=waypoint.y+vek.y*i-1, z=waypoint.z+vek.z*i}
+
 		if (minetest.get_node({x=p.x,y=p.y-1,z=p.z}).name=="air" and minetest.get_node({x=p.x,y=p.y-3,z=p.z}).name~=tsm_railcorridors.nodes.rail) then
 			p.y = p.y - 1;
 			if i == chestplace then
 				chestplace = chestplace + 1
 			end
+			if i == cartplace then
+				cartplace = cartplace + 1
+			end
 		end
 
 		-- Chest
 		if i == chestplace then
-			if minetest.get_node({x=p.x+vek.z,y=p.y-1,z=p.z-vek.x}).name == post then
+			if minetest.get_node({x=p.x+vek.z,y=p.y,z=p.z-vek.x}).name == post then
 				chestplace = chestplace + 1
 			else
 				PlaceChest({x=p.x+vek.z,y=p.y,z=p.z-vek.x}, minetest.dir_to_facedir(vek))
+			end
+		end
+
+		-- Rail and cart
+		if i == cartplace then
+			if minetest.get_node({x=p.x+vek.z,y=p.y,z=p.z-vek.x}).name == post then
+				cartplace = cartplace + 1
+			else
+				local cpos = {x=p.x+vek.z,y=p.y,z=p.z-vek.x}
+				local placed = PlaceRail(cpos)
+				if placed then
+					local cart_type = pr:next(1, #tsm_railcorridors.carts)
+					-- FIXME: The cart sometimes fails to spawn
+					minetest.add_entity(cpos, tsm_railcorridors.carts[cart_type])
+				end
 			end
 		end
 
