@@ -559,7 +559,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 				cartplace = cartplace + 1
 			else
 				local cpos = {x=p.x+vek.z,y=p.y,z=p.z-vek.x}
-				local placed = PlaceRail(cpos)
+				local placed = PlaceRail(cpos, damage)
 				if placed then
 					local cart_type = pr:next(1, #tsm_railcorridors.carts)
 					-- FIXME: The cart sometimes fails to spawn
