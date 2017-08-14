@@ -563,7 +563,10 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 				if placed then
 					local cart_type = pr:next(1, #tsm_railcorridors.carts)
 					-- FIXME: The cart sometimes fails to spawn
-					minetest.add_entity(cpos, tsm_railcorridors.carts[cart_type])
+					local cart = minetest.add_entity(cpos, tsm_railcorridors.carts[cart_type])
+					if cart then
+						tsm_railcorridors.on_construct_cart(cpos, cart)
+					end
 				end
 			end
 		end

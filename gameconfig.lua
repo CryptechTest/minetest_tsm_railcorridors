@@ -23,9 +23,11 @@ tsm_railcorridors.nodes = {
 
 -- List of cart entities. Carts will be placed randomly of the right-hand or left side of
 -- the main rail.
-tsm_railcorridors.carts = {
-	"carts:cart",
-}
+tsm_railcorridors.carts = {}
+
+if minetest.get_modpath("carts") then
+	table.insert(tsm_railcorridors.carts, "carts:cart")
+end
 
 if minetest.get_modpath("mobs_monster") then
 	tsm_railcorridors.nodes.cobweb = "mobs:cobweb"
@@ -40,6 +42,13 @@ end
 -- Use this to properly set up the metadata and stuff.
 -- This is needed for subgames if they include mob spawners.
 function tsm_railcorridors.on_construct_spawner(pos)
+end
+
+-- This is called after a cart has been placed by the game.
+-- Use this to properly set up entity metadata and stuff.
+-- * pos: Position of cart
+-- * cart: Cart entity
+function tsm_railcorridors.on_construct_cart(pos, cart)
 end
 
 -- Fallback function. Returns a random treasure. This function is called for chests
