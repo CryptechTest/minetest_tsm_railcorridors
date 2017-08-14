@@ -72,6 +72,20 @@ if setting then
 	probability_damage = P(setting)
 end
 
+-- Enable cobwebs
+local place_cobwebs = true
+setting = minetest.settings:get_bool("tsm_railcorridors_place_cobwebs")
+if setting ~= nil then
+	place_cobwebs = setting
+end
+
+-- Enable mob spawners
+local place_mob_spawners = true
+setting = minetest.settings:get_bool("tsm_railcorridors_place_mob_spawners")
+if setting ~= nil then
+	place_mob_spawners = setting
+end
+
 -- Max. and min. heights between rail corridors are generated
 local height_min = -31000
 local height_max = -30
@@ -524,7 +538,8 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 		end
 
 		-- Mob spawner (at center)
-		if tsm_railcorridors.nodes.spawner and not corridor_has_spawner and webperlin_major:get3d(p) > 0.3 and webperlin_minor:get3d(p) > 0.5 then
+		if place_mob_spawners and tsm_railcorridors.nodes.spawner and not corridor_has_spawner and
+				webperlin_major:get3d(p) > 0.3 and webperlin_minor:get3d(p) > 0.5 then
 			-- Place spawner (if activated in gameconfig),
 			-- enclose in cobwebs and setup the spawner node.
 			local spawner_placed = SetNodeIfCanBuild(p, {name=tsm_railcorridors.nodes.spawner})
@@ -545,7 +560,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 		end
 
 		-- Place cobwebs left and right in the corridor
-		if tsm_railcorridors.nodes.cobweb then
+		if place_cobwebs and tsm_railcorridors.nodes.cobweb then
 			-- Helper function to place a cobweb at the side (based on chance an Perlin noise)
 			local cobweb_at_side = function(basepos, vek)
 				if pr:next(1,5) == 1 then
