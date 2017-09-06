@@ -51,6 +51,7 @@ end
 function tsm_railcorridors.on_construct_cart(pos, cart)
 end
 
+local mg_name = minetest.get_mapgen_setting("mg_name")
 -- Fallback function. Returns a random treasure. This function is called for chests
 -- only if the Treasurer mod is not found.
 -- pr: A PseudoRandom object
@@ -58,10 +59,31 @@ function tsm_railcorridors.get_default_treasure(pr)
 	if pr:next(0,1000) < 30 then
 		return "farming:bread "..pr:next(1,3)
 	elseif pr:next(0,1000) < 50 then
-		if pr:next(0,1000) < 500 then
+		-- Seeds and saplings.
+		-- This includes saplings which are normally unobtainable in v6. :-)
+
+		local r = pr:next(0,1000)
+		-- 25%
+		if r < 250 then
 			return "farming:seed_cotton "..pr:next(1,5)
-		else
+		-- 25%
+		elseif r < 500 then
 			return "farming:seed_wheat "..pr:next(1,5)
+		-- 20%
+		elseif r < 700 then
+			return "default:sapling "..pr:next(1,4)
+		-- 13%
+		elseif r < 830 then
+			return "default:acacia_sapling "..pr:next(1,2)
+		-- 13%
+		elseif r < 960 then
+			return "default:aspen_sapling "..pr:next(1,3)
+		-- 2.5%
+		elseif r < 985 then
+			return "default:bush_sapling "..pr:next(1,4)
+		-- 1.5%
+		else
+			return "default:acacia_bush_sapling "..pr:next(1,4)
 		end
 	elseif pr:next(0,1000) < 5 then
 		return "tnt:tnt "..pr:next(1,3)
