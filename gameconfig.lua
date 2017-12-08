@@ -19,6 +19,15 @@ tsm_railcorridors.nodes = {
 		{ wood = "default:pine_wood", post = "default:fence_pine_wood", chance = 3},
 		{ wood = "default:aspen_wood", post = "default:fence_aspen_wood", chance = 2},
 	},
+
+	-- Alternative to corridor_woods. If specified as a function.
+	-- this will be called to return the wood type.
+	-- Parameters:
+	-- * pos: Position in which the rail corridors start
+	-- * node: Node table of that position
+	-- Returns: 2 itemstrings. First one is the wood node, second one is the fence node.
+	--     Example: "example:wood", "example:fence"
+	corridor_woods_function = nil,
 }
 
 -- List of cart entities. Carts will be placed randomly of the right-hand or left side of
