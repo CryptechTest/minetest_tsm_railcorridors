@@ -1,4 +1,4 @@
--- This file stores the various node types. This makes it easier to plug this mod into subgames
+-- This file stores the various node types. This makes it easier to plug this mod into games
 -- in which you need to change the node names.
 
 -- Node names (Don't use aliases!)
@@ -41,7 +41,7 @@ end
 if minetest.get_modpath("mobs_monster") then
 	tsm_railcorridors.nodes.cobweb = "mobs:cobweb"
 
-	-- This is for subgames to add their spawner node. No spawner is added by default
+	-- This is for games to add their spawner node. No spawner is added by default
 	-- because Mobs Redo's mob spawner is still unfinished.
 	-- If you set this, you MUST also set tsm_railcorridors.place_spawner.
 	tsm_railcorridors.nodes.spawner = nil
@@ -49,7 +49,7 @@ end
 
 -- This is called after a spawner has been placed by the game.
 -- Use this to properly set up the metadata and stuff.
--- This is needed for subgames if they include mob spawners.
+-- This is needed for games if they include mob spawners.
 function tsm_railcorridors.on_construct_spawner(pos)
 end
 
