@@ -199,14 +199,27 @@ local function Cube(p, radius, node, replace_air_only)
 	local solid = nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular") and nodedef.liquidtype == "none"
 	-- Check if all the nodes could be set
 	local built_all = true
-	for zi = p.z-radius, p.z+radius do
-		for yi = y_top, p.y-radius, -1 do
-			for xi = p.x-radius, p.x+radius do
+
+	for xi = p.x-radius, p.x+radius do
+		for zi = p.z-radius, p.z+radius do
+			local column_last_attached = nil
+			for yi = y_top, p.y-radius, -1 do
 				local ok = false
-				if not solid and yi == y_top then
-					local topdef = minetest.registered_nodes[minetest.get_node({x=xi,y=yi+1,z=zi}).name]
-					if not (topdef.groups and topdef.groups.attached_node) and topdef.liquidtype == "none" then
+				local thisnode = minetest.get_node({x=xi,y=yi,z=zi})
+				if not solid then
+					if yi == y_top then
+						local topnode = minetest.get_node({x=xi,y=yi+1,z=zi})
+						local topdef = minetest.registered_nodes[topnode.name]
+						if minetest.get_item_group(topnode.name, "attached_node") ~= 1 and topdef.liquidtype == "none" then
+							ok = true
+						end
+					elseif column_last_attached and yi == column_last_attached - 1 then
+						ok = false
+					else
 						ok = true
+					end
+					if minetest.get_item_group(thisnode.name, "attached_node") == 1 then
+						column_last_attached = yi
 					end
 				else
 					ok = true
