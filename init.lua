@@ -142,7 +142,11 @@ local function SetNodeIfCanBuild(pos, node, check_above)
 	local name = minetest.get_node(pos).name
 	local def = minetest.registered_nodes[name]
 	if name ~= "unknown" and name ~= "ignore" and def.is_ground_content and
-			(def.liquidtype == "none" or name == tsm_railcorridors.nodes.cobweb) then
+			(def.liquidtype == "none" or
+			name == tsm_railcorridors.nodes.cobweb or
+			name == tsm_railcorridors.nodes.torch_wall or
+			name == tsm_railcorridors.nodes.torch_floor
+			) then
 		minetest.set_node(pos, node)
 		return true
 	else
