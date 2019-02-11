@@ -618,7 +618,12 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 			if minetest.get_node(cpos).name == post then
 				cartplace = cartplace + 1
 			else
-				local placed = PlaceRail(cpos, damage)
+				local placed
+				if IsRailSurface({x=cpos.x, y=cpos.y-1, z=cpos.z}) then
+					placed = PlaceRail(cpos, damage)
+				else
+					placed = false
+				end
 				if placed then
 					local cart_type = pr:next(1, #tsm_railcorridors.carts)
 					-- FIXME: The cart sometimes fails to spawn
