@@ -108,8 +108,9 @@ local chaos_mode = minetest.settings:get_bool("tsm_railcorridors_chaos") or fals
 local pr, webperlin_major, webperlin_minor
 local pr_inited = false
 
-local function InitRandomizer(seed)
+local function InitRandomizer()
 	if not pr_inited then
+		local seed = minetest.get_mapgen_setting("seed")
 		-- Mostly used for corridor gen.
 		pr = PseudoRandom(seed)
 		-- Used for cobweb generation, both noises have to reach a high value for cobwebs to appear
@@ -977,7 +978,7 @@ end
 
 -- The rail corridor algorithm starts here
 minetest.register_on_generated(function(minp, maxp, blockseed)
-	InitRandomizer(blockseed)
+	InitRandomizer()
 	if minp.y < height_max and maxp.y > height_min and pr:next() < probability_railcaves_in_chunk then
 		-- Get semi-random height in chunk
 		local buffer = 5
