@@ -252,7 +252,7 @@ local function Cube(p, radius, node, replace_air_only)
 	return built_all
 end
 
-function DirtRoom(p, radius, height)
+function DirtRoom(p, radius, height, dirt_mode)
 	local y_top = p.y-radius+height+1
 	local built_all = true
 	for xi = p.x-radius, p.x+radius do
@@ -261,7 +261,13 @@ function DirtRoom(p, radius, height)
 				local thisnode = minetest.get_node({x=xi,y=yi,z=zi})
 				local built = false
 				if xi == p.x-radius or xi == p.x+radius or zi == p.z-radius or zi == p.z+radius or yi == p.y-radius or yi == y_top then
-					built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, {name=tsm_railcorridors.nodes.dirt})
+					if dirt_mode == 1 or yi == p.y-radius then
+						built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, {name=tsm_railcorridors.nodes.dirt})
+					elseif (dirt_mode == 2 or dirt_mode == 3) and yi == y_top then
+						if minetest.get_item_group(thisnode.name, "falling_node") == 1 then
+							built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, {name=tsm_railcorridors.nodes.dirt})
+						end
+					end
 				else
 					built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, {name="air"})
 				end
@@ -856,8 +862,9 @@ local function place_corridors(main_cave_coords, psra)
 	if pr:next(0, 100) < 50 then
 		floor_diff = 0
 	end
+	local dirt_mode = pr:next(1,2)
 
-	DirtRoom(main_cave_coords, size, height)
+	DirtRoom(main_cave_coords, size, height, dirt_mode)
 	main_cave_coords.y =main_cave_coords.y-(size-2-floor_diff)
 
 	-- Get wood and fence post types, using gameconfig.
