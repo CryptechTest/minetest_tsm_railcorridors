@@ -12,7 +12,6 @@ local P = function (float)
 	return math.floor(32767 * float)
 end
 
--- Wahrscheinlichkeit für jeden Chunk, solche Gänge mit Schienen zu bekommen
 -- Probability for every newly generated chunk to get corridors
 local probability_railcaves_in_chunk = P(0.33333)
 setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_railcaves_in_chunk"))
@@ -20,7 +19,6 @@ if setting then
 	probability_railcaves_in_chunk = P(setting)
 end
 
--- Innerhalb welcher Parameter soll sich die Pfadlänge bewegen? (Forks heben den Maximalwert auf)
 -- Minimal and maximal value of path length (forks don't look up this value)
 local way_min = 4;
 local way_max = 7;
@@ -33,7 +31,6 @@ if setting then
 	way_max = setting
 end
 
--- Wahrsch. für jeden geraden Teil eines Korridors, Fackeln zu bekommen
 -- Probability for every horizontal part of a corridor to be with torches
 local probability_torches_in_segment = P(0.5)
 setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_torches_in_segment"))
@@ -41,7 +38,6 @@ if setting then
 	probability_torches_in_segment = P(setting)
 end
 
--- Wahrsch. für jeden Teil eines Korridors, nach oben oder nach unten zu gehen
 -- Probability for every part of a corridor to go up or down
 local probability_up_or_down = P(0.2)
 setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_up_or_down"))
@@ -49,7 +45,6 @@ if setting then
 	probability_up_or_down = P(setting)
 end
 
--- Wahrscheinlichkeit für jeden Teil eines Korridors, sich zu verzweigen – vorsicht, wenn fast jeder Gang sich verzweigt, kann der Algorithums unlösbar werden und MT hängt sich auf
 -- Probability for every part of a corridor to fork – caution, too high values may cause MT to hang on.
 local probability_fork = P(0.04)
 setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_fork"))
@@ -57,7 +52,6 @@ if setting then
 	probability_fork = P(setting)
 end
 
--- Wahrscheinlichkeit für jeden geraden Teil eines Korridors eine Kiste zu enthalten
 -- Probability for every part of a corridor to contain a chest
 local probability_chest = P(0.05)
 setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_chest"))
@@ -108,7 +102,7 @@ end
 -- Chaos Mode: If enabled, rail corridors don't stop generating when hitting obstacles
 local chaos_mode = minetest.settings:get_bool("tsm_railcorridors_chaos") or false
 
--- Parameter Ende
+-- End of parameters
 
 -- Random generators
 local pr, webperlin_major, webperlin_minor
@@ -304,7 +298,6 @@ end
 
 
 -- Random chest items
--- Zufälliger Kisteninhalt
 local function rci()
 	if(minetest.get_modpath("treasurer") ~= nil) then
 		local treasures
@@ -341,7 +334,8 @@ local function rci()
 		return tsm_railcorridors.get_default_treasure(pr)
 	end
 end
--- chests
+
+-- Chests
 local function PlaceChest(pos, param2)
 	if SetNodeIfCanBuild(pos, {name=tsm_railcorridors.nodes.chest, param2=param2}) then
 		local meta = minetest.get_meta(pos)
@@ -510,7 +504,6 @@ local function WoodSupport(p, wood, post, torches, dir, torchdir)
 	end
 end
 
--- Gänge mit Schienen
 -- Corridors with rails
 
 -- Returns <success>, <segments>
@@ -554,8 +547,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 			WoodSupport(p, wood, post, torches, dir, torchdir)
 		end
 
-		-- nächster Punkt durch Vektoraddition
-		-- next way point
+		-- Next way point
 		p = vector.add(p, segment_vector)
 	end
 
@@ -608,8 +600,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	local corridor_dug, corridor_segments_dug = corridor_part(start, vek, segcount, wood, post, up_or_down_prev)
 	local corridor_vek = {x=vek.x*segcount, y=vek.y*segcount, z=vek.z*segcount}
 
-	-- nachträglich Schienen legen
-	-- after this: rails
+	-- After this: rails
 	segamount = 1
 	if sign then
 		segamount = 0-segamount
@@ -797,9 +788,9 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 	local wp = waypoint
 	local c = coord
 	local s = sign
-	local ud = false -- up or down
-	local udn = false -- up or down is next
-	local udp = false -- up or down was previous
+	local ud = false -- Up or down
+	local udn = false -- Up or down is next
+	local udp = false -- Up or down was previous
 	local up
 	for i=1,length do
 		local needs_platform
@@ -830,7 +821,7 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 		elseif udn and not needs_platform then
 			udn = false
 		end
-		-- Make corridor / Korridor graben
+		-- Make corridor
 		local first_or_final
 		if i == length then
 			first_or_final = "final"
@@ -839,7 +830,6 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 		end
 		wp, no_spawner = corridor_func(wp,c,s, ud, udn, udp, up, wood, post, first_or_final, damage, no_spawner)
 		if wp == false then return end
-		-- Verzweigung?
 		-- Fork?
 		if pr:next() < probability_fork then
 			local p = {x=wp.x, y=wp.y, z=wp.z}
@@ -853,8 +843,7 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 			WoodBulk({x=p.x, y=p.y+2, z=p.z}, wood)
 			return
 		end
-		-- coord und sign verändern
-		-- randomly change sign and coord
+		-- Randomly change sign and coord
 		if c=="x" then
 			c="z"
 		elseif c=="z" then
@@ -982,19 +971,18 @@ local function place_corridors(main_cave_coords, psra)
 
 end
 
+-- The rail corridor algorithm starts here
 minetest.register_on_generated(function(minp, maxp, blockseed)
 	InitRandomizer(blockseed)
 	if minp.y < height_max and maxp.y > height_min and pr:next() < probability_railcaves_in_chunk then
 		-- Get semi-random height in chunk
-
 		local buffer = 5
 		local y = pr:next(minp.y + buffer, maxp.y - buffer)
 		y = math.floor(math.max(height_min + buffer, math.min(height_max - buffer, y)))
 
 		-- Mid point of the chunk
 		local p = {x=minp.x+math.floor((maxp.x-minp.x)/2), y=y, z=minp.z+math.floor((maxp.z-minp.z)/2)}
-		-- Haupthöhle und alle weiteren
-		-- Corridors; starting with main cave out of dirt
+		-- Start placing corridors, beginning with a dirt room
 		place_corridors(p, pr)
 	end
 end)
