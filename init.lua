@@ -452,7 +452,12 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 		torchdir = {3, 2}
 	end
 	for segmentindex = 0, segment_count-1 do
-		local dug = Cube(p, 1, {name="air"}, false, wood, post)
+		local dug
+		if segment_vector.y == 0 then
+			dug = Cube(p, 1, {name="air"}, false, wood, post)
+		else
+			dug = Cube(p, 1, {name="air"}, false)
+		end
 		if not chaos_mode and segmentindex > 0 and not dug then return false, segmentindex end
 		-- Add wooden platform, if neccessary. To avoid floating rails
 		if segment_vector.y == 0 then
@@ -551,7 +556,12 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	end
 
 	-- End of the corridor segment; create the final piece
-	local dug = Cube(p, 1, {name="air"}, false, wood, post)
+	local dug
+	if segment_vector.y == 0 then
+		dug = Cube(p, 1, {name="air"}, false, wood, post)
+	else
+		dug = Cube(p, 1, {name="air"}, false)
+	end
 	if not chaos_mode and not dug then return false, segment_count end
 	if segment_vector.y == 0 then
 		Platform({x=p.x, y=p.y-1, z=p.z}, 1, node_wood)
@@ -589,7 +599,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	end
 	local segcount = pr:next(4,6)
 	if up_or_down and up == false then
-		Cube(waypoint, 1, {name="air"}, false, wood, post)
+		Cube(waypoint, 1, {name="air"}, false)
 	end
 	local corridor_dug, corridor_segments_dug = corridor_part(start, vek, segcount, wood, post, first_or_final, up_or_down_prev)
 	local corridor_vek = {x=vek.x*segcount, y=vek.y*segcount, z=vek.z*segcount}
