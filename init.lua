@@ -185,7 +185,15 @@ local function NeedsPlatform(pos)
 	local node = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
 	local node2 = minetest.get_node({x=pos.x,y=pos.y-2,z=pos.z})
 	local nodedef = minetest.registered_nodes[node.name]
-	return node.name ~= "ignore" and node.name ~= "unknown" and nodedef.is_ground_content and ((nodedef.walkable == false and node2.name ~= tsm_railcorridors.nodes.dirt) or (nodedef.groups and nodedef.groups.falling_node))
+	return
+		-- Node can be replaced if ground content or rail
+		-- Rail is replacable to prevent odd rail slopes.
+		(node.name ~= "ignore" and node.name ~= "unknown" and (nodedef.is_ground_content or node.name == tsm_railcorridors.nodes.rail)) and
+		-- Node needs platform if node below is not walkable.
+		-- Unless 2 nodes below there is dirt: This is a special case for the starter cube.
+		((nodedef.walkable == false and node2.name ~= tsm_railcorridors.nodes.dirt) or
+		-- Falling nodes alway need to be replaced by a platform, we want a solid and safe ground
+		(nodedef.groups and nodedef.groups.falling_node))
 end
 
 -- Create a cube filled with the specified nodes
