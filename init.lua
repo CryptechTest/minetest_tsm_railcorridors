@@ -518,7 +518,7 @@ end
 -- Returns <success>, <segments>
 -- success: true if corridor could be placed entirely
 -- segments: Number of segments successfully placed
-local function corridor_part(start_point, segment_vector, segment_count, wood, post, first_or_final, up_or_down_prev)
+local function corridor_part(start_point, segment_vector, segment_count, wood, post, first_or_final, up_or_down_prev, first_support)
 	local p = {x=start_point.x, y=start_point.y, z=start_point.z}
 	local torches = pr:next() < probability_torches_in_segment
 	local dir = {0, 0}
@@ -531,12 +531,24 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 		dir = {0, 1}
 		torchdir = {3, 2}
 	end
+	if first_support == nil then
+		first_support = false
+	end
 	for segmentindex = 0, segment_count-1 do
 		local dug
 		if segment_vector.y == 0 then
 			dug = Cube(p, 1, {name="air"}, false, wood, post)
 		else
 			dug = Cube(p, 1, {name="air"}, false)
+		end
+		if first_support then
+			WoodSupport(p, wood, post, torches, dir, torchdir)
+			if IsRailSurface({x=p.x,y=p.y-2,z=p.z}) then
+				PlaceRail({x=p.x,y=p.y-1,z=p.z}, damage)
+			else
+				PlaceRail({x=p.x,y=p.y-2,z=p.z}, damage)
+			end
+			first_support = false
 		end
 		if not chaos_mode and segmentindex > 0 and not dug then return false, segmentindex end
 		-- Add wooden platform, if neccessary. To avoid floating rails
@@ -575,7 +587,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	return true, segment_count
 end
 
-local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next, up_or_down_prev, up, wood, post, first_or_final, damage, no_spawner)
+local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next, up_or_down_prev, up, wood, post, first_or_final, damage, no_spawner, first_support)
 	local segamount = 3
 	if up_or_down then
 		segamount = 1
@@ -607,7 +619,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	if up_or_down and up == false then
 		Cube(waypoint, 1, {name="air"}, false)
 	end
-	local corridor_dug, corridor_segments_dug = corridor_part(start, vek, segcount, wood, post, first_or_final, up_or_down_prev)
+	local corridor_dug, corridor_segments_dug = corridor_part(start, vek, segcount, wood, post, first_or_final, up_or_down_prev, first_support)
 	local corridor_vek = {x=vek.x*segcount, y=vek.y*segcount, z=vek.z*segcount}
 
 	-- nachträglich Schienen legen
@@ -795,7 +807,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	end
 end
 
-local function start_corridor(waypoint, coord, sign, length, psra, wood, post, damage, no_spawner)
+local function start_corridor(waypoint, coord, sign, length, psra, wood, post, damage, no_spawner, first_support)
 	local wp = waypoint
 	local c = coord
 	local s = sign
@@ -839,7 +851,8 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 		elseif i == 1 then
 			first_or_final = "first"
 		end
-		wp, no_spawner = corridor_func(wp,c,s, ud, udn, udp, up, wood, post, first_or_final, damage, no_spawner)
+		wp, no_spawner = corridor_func(wp,c,s, ud, udn, udp, up, wood, post, first_or_final, damage, no_spawner, first_support)
+		first_support = false
 		if wp == false then return end
 		-- Verzweigung?
 		-- Fork?
@@ -931,7 +944,7 @@ local function place_corridors(main_cave_coords, psra)
 		{axis="z", axis2="x", sign=true},
 	}
 	local first_corridor
-	local corridors = 2
+	local corridors = 1
 	for i=1, 2 do
 		if pr:next(0,100) < 70 then
 			corridors = corridors + 1
@@ -943,14 +956,10 @@ local function place_corridors(main_cave_coords, psra)
 		end
 	end
 	local centered_crossing = false
-	local place_center_rail = false
 	if corridors <= 4 and pr:next(1, 20) >= 11 then
 		centered_crossing = true
 	end
-	local from_center_base = 0
-	if not centered_crossing then
-		from_center_base = pr:next(0, size)
-	end
+	local from_center_base = size + pr:next(-1,1)
 	for i=1, math.min(4, corridors) do
 		local d = pr:next(1, #dirs)
 		local dir = dirs[d]
@@ -971,24 +980,16 @@ local function place_corridors(main_cave_coords, psra)
 				from_center = -from_center
 			end
 		end
-		if from_center == 0 and side_offset == 0 then
-			place_center_rail = true
-		end
 		if i == 1 then
 			first_corridor = {sign=dir.sign, axis=dir.axis, axis2=dir.axis2, side_offset=side_offset, from_center=from_center}
 		end
 		local coords = vector.add(main_cave_coords, {[dir.axis] = from_center, y=0, [dir.axis2] = side_offset})
-		start_corridor(coords, dir.axis, dir.sign, pr:next(way_min,way_max), psra, wood, post, damage, false)
+		start_corridor(coords, dir.axis, dir.sign, pr:next(way_min,way_max), psra, wood, post, damage, false, true)
 		table.remove(dirs, d)
 	end
 	if corridors == 5 then
 		local special_coords = vector.add(main_cave_coords, {[first_corridor.axis2] = -first_corridor.side_offset, y=0, [first_corridor.axis] = first_corridor.from_center})
-		start_corridor(special_coords, first_corridor.axis, first_corridor.sign, pr:next(way_min,way_max), psra, wood, post, damage, false)
-	end
-
-	if place_center_rail then
-		-- Center rail
-		PlaceRail(vector.add(main_cave_coords, {x=0, y=-1-floor_diff, z=0}), damage)
+		start_corridor(special_coords, first_corridor.axis, first_corridor.sign, pr:next(way_min,way_max), psra, wood, post, damage, false, true)
 	end
 
 end
