@@ -847,7 +847,7 @@ local function place_corridors(main_cave_coords, psra)
 	end
 	--[[ Starter cube: A big hollow dirt cube from which the corridors will extend.
 	Corridor generation starts here. ]]
-	local size = pr:next(3, 7)
+	local size = pr:next(3, 9)
 	local height = pr:next(4, 7)
 	if height > size then
 		height = size
@@ -859,11 +859,6 @@ local function place_corridors(main_cave_coords, psra)
 
 	DirtRoom(main_cave_coords, size, height)
 	main_cave_coords.y =main_cave_coords.y-(size-2-floor_diff)
-	-- Center rail
-	PlaceRail({x=main_cave_coords.x, y=main_cave_coords.y-1-floor_diff, z=main_cave_coords.z}, damage)
-
-	local xs = pr:next(0, 2) < 1
-	local zs = pr:next(0, 2) < 1;
 
 	-- Get wood and fence post types, using gameconfig.
 
@@ -893,16 +888,74 @@ local function place_corridors(main_cave_coords, psra)
 		post = tsm_railcorridors.nodes.corridor_woods[woodtype].post
 	end
 
-	start_corridor(main_cave_coords, "x", xs, pr:next(way_min,way_max), psra, wood, post, damage, false)
-	start_corridor(main_cave_coords, "z", zs, pr:next(way_min,way_max), psra, wood, post, damage, false)
-	-- Auch mal die andere Richtung?
-	-- Try the other direction?
-	if pr:next(0, 100) < 70 then
-		start_corridor(main_cave_coords, "x", not xs, pr:next(way_min,way_max), psra, wood, post, damage, false)
+	-- Start 2-5 corridors in each direction
+	local dirs = {
+		{axis="x", axis2="z", sign=false},
+		{axis="x", axis2="z", sign=true},
+		{axis="z", axis2="x", sign=false},
+		{axis="z", axis2="x", sign=true},
+	}
+	local first_corridor
+	local corridors = 2
+	for i=1, 2 do
+		if pr:next(0,100) < 70 then
+			corridors = corridors + 1
+		end
 	end
-	if pr:next(0, 100) < 70 then
-		start_corridor(main_cave_coords, "z", not zs, pr:next(way_min,way_max), psra, wood, post, damage, false)
+	if size > 4 then
+		if pr:next(0,100) < 50 then
+			corridors = corridors + 1
+		end
 	end
+	local centered_crossing = false
+	local place_center_rail = false
+	if corridors <= 4 and pr:next(1, 20) >= 11 then
+		centered_crossing = true
+	end
+	local from_center_base = 0
+	if not centered_crossing then
+		from_center_base = pr:next(0, size)
+	end
+	for i=1, math.min(4, corridors) do
+		local d = pr:next(1, #dirs)
+		local dir = dirs[d]
+		local side_offset = 0
+		if not centered_crossing and size > 3 then
+			if i==1 and corridors == 5 then
+				side_offset = pr:next(2, size-2)
+				if pr:next(1,2) == 1 then
+					side_offset = -side_offset
+				end
+			else
+				side_offset = pr:next(-size+2, size-2)
+			end
+		end
+		local from_center = from_center_base
+		if not centered_crossing then
+			if dir.sign then
+				from_center = -from_center
+			end
+		end
+		if from_center == 0 and side_offset == 0 then
+			place_center_rail = true
+		end
+		if i == 1 then
+			first_corridor = {sign=dir.sign, axis=dir.axis, axis2=dir.axis2, side_offset=side_offset, from_center=from_center}
+		end
+		local coords = vector.add(main_cave_coords, {[dir.axis] = from_center, y=0, [dir.axis2] = side_offset})
+		start_corridor(coords, dir.axis, dir.sign, pr:next(way_min,way_max), psra, wood, post, damage, false)
+		table.remove(dirs, d)
+	end
+	if corridors == 5 then
+		local special_coords = vector.add(main_cave_coords, {[first_corridor.axis2] = -first_corridor.side_offset, y=0, [first_corridor.axis] = first_corridor.from_center})
+		start_corridor(special_coords, first_corridor.axis, first_corridor.sign, pr:next(way_min,way_max), psra, wood, post, damage, false)
+	end
+
+	if place_center_rail then
+		-- Center rail
+		PlaceRail(vector.add(main_cave_coords, {x=0, y=-1-floor_diff, z=0}), damage)
+	end
+
 end
 
 minetest.register_on_generated(function(minp, maxp, blockseed)
