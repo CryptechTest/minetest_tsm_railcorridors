@@ -176,8 +176,9 @@ end
 -- Returns true if rails are allowed to be placed on top of this node
 local function IsRailSurface(pos)
 	local nodename = minetest.get_node(pos).name
+	local nodename_above = minetest.get_node({x=pos.x,y=pos.y+2,z=pos.z}).name
 	local nodedef = minetest.registered_nodes[nodename]
-	return nodename ~= "unknown" and nodename ~= "ignore" and nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular")
+	return nodename ~= "unknown" and nodename ~= "ignore" and nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular") and nodename_above ~= tsm_railcorridors.nodes.rail
 end
 
 -- Checks if the node is empty space which requires to be filled by a platform
