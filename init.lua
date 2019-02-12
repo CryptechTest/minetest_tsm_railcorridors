@@ -424,12 +424,92 @@ local function TryPlaceCobweb(pos, needs_check, side_vector)
 		return false
 	end
 end
-	
+
 local function WoodBulk(pos, wood)
 	SetNodeIfCanBuild({x=pos.x+1, y=pos.y, z=pos.z+1}, {name=wood}, false, true)
 	SetNodeIfCanBuild({x=pos.x-1, y=pos.y, z=pos.z+1}, {name=wood}, false, true)
 	SetNodeIfCanBuild({x=pos.x+1, y=pos.y, z=pos.z-1}, {name=wood}, false, true)
 	SetNodeIfCanBuild({x=pos.x-1, y=pos.y, z=pos.z-1}, {name=wood}, false, true)
+end
+
+-- Build a wooden support frame
+local function WoodSupport(p, wood, post, torches, dir, torchdir)
+	local node_wood = {name=wood}
+	local node_fence = {name=post}
+
+	local calc = {
+		p.x+dir[1], p.z+dir[2], -- X and Z, added by direction
+		p.x-dir[1], p.z-dir[2], -- subtracted
+		p.x+dir[2], p.z+dir[1], -- orthogonal
+		p.x-dir[2], p.z-dir[1], -- orthogonal, the other way
+	}
+	--[[ Shape:
+		WWW
+		P.P
+		PrP
+		pfp
+	W = wood
+	P = post (above floor level)
+	p = post (in floor level, only placed if no floor)
+
+	From previous generation (for reference):
+	f = floor
+	r = rail
+	. = air
+	]]
+
+	-- Don't place those wood structs below open air
+	if not (minetest.get_node({x=calc[1], y=p.y+2, z=calc[2]}).name == "air" and
+		minetest.get_node({x=calc[3], y=p.y+2, z=calc[4]}).name == "air" and
+		minetest.get_node({x=p.x, y=p.y+2, z=p.z}).name == "air") then
+
+		-- Left post and planks
+		local left_ok = true
+		left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y-1, z=calc[2]}, node_fence)
+		if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y  , z=calc[2]}, node_fence) end
+		if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y+1, z=calc[2]}, node_wood, false, true) end
+
+		-- Right post and planks
+		local right_ok = true
+		right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y-1, z=calc[4]}, node_fence)
+		if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y  , z=calc[4]}, node_fence) end
+		if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y+1, z=calc[4]}, node_wood, false, true) end
+
+		-- Middle planks
+		local top_planks_ok = false
+		if left_ok and right_ok then top_planks_ok = SetNodeIfCanBuild({x=p.x, y=p.y+1, z=p.z}, node_wood) end
+
+		if minetest.get_node({x=p.x,y=p.y-2,z=p.z}).name=="air" then
+			if left_ok then SetNodeIfCanBuild({x=calc[1], y=p.y-2, z=calc[2]}, node_fence) end
+			if right_ok then SetNodeIfCanBuild({x=calc[3], y=p.y-2, z=calc[4]}, node_fence) end
+		end
+		-- Torches on the middle planks
+		if torches and top_planks_ok then
+			-- Place torches at horizontal sides
+			SetNodeIfCanBuild({x=calc[5], y=p.y+1, z=calc[6]}, {name=tsm_railcorridors.nodes.torch_wall, param2=torchdir[1]}, true)
+			SetNodeIfCanBuild({x=calc[7], y=p.y+1, z=calc[8]}, {name=tsm_railcorridors.nodes.torch_wall, param2=torchdir[2]}, true)
+		end
+	elseif torches then
+		-- Try to build torches instead of the wood structs
+		local node = {name=tsm_railcorridors.nodes.torch_floor, param2=minetest.dir_to_wallmounted({x=0,y=-1,z=0})}
+
+		-- Try two different height levels
+		local pos1 = {x=calc[1], y=p.y-2, z=calc[2]}
+		local pos2 = {x=calc[3], y=p.y-2, z=calc[4]}
+		local nodedef1 = minetest.registered_nodes[minetest.get_node(pos1).name]
+		local nodedef2 = minetest.registered_nodes[minetest.get_node(pos2).name]
+
+		if nodedef1.walkable then
+			pos1.y = pos1.y + 1
+		end
+		SetNodeIfCanBuild(pos1, node, true)
+
+		if nodedef2.walkable then
+			pos2.y = pos2.y + 1
+		end
+		SetNodeIfCanBuild(pos2, node, true)
+
+	end
 end
 
 -- Gänge mit Schienen
@@ -444,7 +524,6 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	local dir = {0, 0}
 	local torchdir = {1, 1}
 	local node_wood = {name=wood}
-	local node_fence = {name=post}
 	if segment_vector.x == 0 and segment_vector.z ~= 0 then
 		dir = {1, 0}
 		torchdir = {5, 4}
@@ -473,84 +552,10 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 				Platform({x=p.x, y=p.y-1, z=p.z}, 1, node_wood)
 			end
 		end
-		-- Diese komischen Holz-Konstruktionen
-		-- These strange wood structs
 		if segmentindex % 2 == 1 and segment_vector.y == 0 then
-			local calc = {
-				p.x+dir[1], p.z+dir[2], -- X and Z, added by direction
-				p.x-dir[1], p.z-dir[2], -- subtracted
-				p.x+dir[2], p.z+dir[1], -- orthogonal
-				p.x-dir[2], p.z-dir[1], -- orthogonal, the other way
-			}
-			--[[ Shape:
-				WWW
-				P.P
-				PrP
-				pfp
-			W = wood
-			P = post (above floor level)
-			p = post (in floor level, only placed if no floor)
-			
-			From previous generation (for reference):
-			f = floor
-			r = rail
-			. = air
-			]]
-
-			-- Don't place those wood structs below open air
-			if not (minetest.get_node({x=calc[1], y=p.y+2, z=calc[2]}).name == "air" and
-				minetest.get_node({x=calc[3], y=p.y+2, z=calc[4]}).name == "air" and
-				minetest.get_node({x=p.x, y=p.y+2, z=p.z}).name == "air") then
-
-				-- Left post and planks
-				local left_ok = true
-				left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y-1, z=calc[2]}, node_fence)
-				if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y  , z=calc[2]}, node_fence) end
-				if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y+1, z=calc[2]}, node_wood, false, true) end
-
-				-- Right post and planks
-				local right_ok = true
-				right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y-1, z=calc[4]}, node_fence)
-				if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y  , z=calc[4]}, node_fence) end
-				if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y+1, z=calc[4]}, node_wood, false, true) end
-
-				-- Middle planks
-				local top_planks_ok = false
-				if left_ok and right_ok then top_planks_ok = SetNodeIfCanBuild({x=p.x, y=p.y+1, z=p.z}, node_wood) end
-
-				if minetest.get_node({x=p.x,y=p.y-2,z=p.z}).name=="air" then
-					if left_ok then SetNodeIfCanBuild({x=calc[1], y=p.y-2, z=calc[2]}, node_fence) end
-					if right_ok then SetNodeIfCanBuild({x=calc[3], y=p.y-2, z=calc[4]}, node_fence) end
-				end
-				-- Torches on the middle planks
-				if torches and top_planks_ok then
-					-- Place torches at horizontal sides
-					SetNodeIfCanBuild({x=calc[5], y=p.y+1, z=calc[6]}, {name=tsm_railcorridors.nodes.torch_wall, param2=torchdir[1]}, true)
-					SetNodeIfCanBuild({x=calc[7], y=p.y+1, z=calc[8]}, {name=tsm_railcorridors.nodes.torch_wall, param2=torchdir[2]}, true)
-				end
-			elseif torches then
-				-- Try to build torches instead of the wood structs
-				local node = {name=tsm_railcorridors.nodes.torch_floor, param2=minetest.dir_to_wallmounted({x=0,y=-1,z=0})}
-
-				-- Try two different height levels
-				local pos1 = {x=calc[1], y=p.y-2, z=calc[2]}
-				local pos2 = {x=calc[3], y=p.y-2, z=calc[4]}
-				local nodedef1 = minetest.registered_nodes[minetest.get_node(pos1).name]
-				local nodedef2 = minetest.registered_nodes[minetest.get_node(pos2).name]
-
-				if nodedef1.walkable then
-					pos1.y = pos1.y + 1
-				end
-				SetNodeIfCanBuild(pos1, node, true)
-
-				if nodedef2.walkable then
-					pos2.y = pos2.y + 1
-				end
-				SetNodeIfCanBuild(pos2, node, true)
-
-			end
+			WoodSupport(p, wood, post, torches, dir, torchdir)
 		end
-		
+
 		-- nächster Punkt durch Vektoraddition
 		-- next way point
 		p = vector.add(p, segment_vector)
@@ -767,7 +772,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 
 		end
 	end
-	
+
 	local offset = table.copy(corridor_vek)
 	local final_point = vector.add(waypoint, offset)
 	if up_or_down then
