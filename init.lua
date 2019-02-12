@@ -112,7 +112,6 @@ local chaos_mode = minetest.settings:get_bool("tsm_railcorridors_chaos") or fals
 
 -- Random generators
 local pr, webperlin_major, webperlin_minor
-local pr_initialized = false
 
 local function InitRandomizer(seed)
 	-- Mostly used for corridor gen.
@@ -120,7 +119,6 @@ local function InitRandomizer(seed)
 	-- Used for cobweb generation, both noises have to reach a high value for cobwebs to appear
 	webperlin_major = PerlinNoise(934, 3, 0.6, 500)
 	webperlin_minor = PerlinNoise(834, 3, 0.6, 50)
-	pr_initialized = true
 end
 
 
@@ -265,7 +263,7 @@ local function Cube(p, radius, node, replace_air_only, wood, post)
 	return built_all
 end
 
-function DirtRoom(p, radius, height, dirt_mode)
+local function DirtRoom(p, radius, height, dirt_mode)
 	local y_top = p.y-radius+height+1
 	local built_all = true
 	for xi = p.x-radius, p.x+radius do
@@ -464,13 +462,13 @@ local function WoodSupport(p, wood, post, torches, dir, torchdir)
 		minetest.get_node({x=p.x, y=p.y+2, z=p.z}).name == "air") then
 
 		-- Left post and planks
-		local left_ok = true
+		local left_ok
 		left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y-1, z=calc[2]}, node_fence)
 		if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y  , z=calc[2]}, node_fence) end
 		if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y+1, z=calc[2]}, node_wood, false, true) end
 
 		-- Right post and planks
-		local right_ok = true
+		local right_ok
 		right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y-1, z=calc[4]}, node_fence)
 		if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y  , z=calc[4]}, node_fence) end
 		if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y+1, z=calc[4]}, node_wood, false, true) end
@@ -518,7 +516,7 @@ end
 -- Returns <success>, <segments>
 -- success: true if corridor could be placed entirely
 -- segments: Number of segments successfully placed
-local function corridor_part(start_point, segment_vector, segment_count, wood, post, first_or_final, up_or_down_prev)
+local function corridor_part(start_point, segment_vector, segment_count, wood, post, up_or_down_prev)
 	local p = {x=start_point.x, y=start_point.y, z=start_point.z}
 	local torches = pr:next() < probability_torches_in_segment
 	local dir = {0, 0}
@@ -607,7 +605,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	if up_or_down and up == false then
 		Cube(waypoint, 1, {name="air"}, false)
 	end
-	local corridor_dug, corridor_segments_dug = corridor_part(start, vek, segcount, wood, post, first_or_final, up_or_down_prev)
+	local corridor_dug, corridor_segments_dug = corridor_part(start, vek, segcount, wood, post, up_or_down_prev)
 	local corridor_vek = {x=vek.x*segcount, y=vek.y*segcount, z=vek.z*segcount}
 
 	-- nachträglich Schienen legen
@@ -659,7 +657,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 		-- Randomly returns either the left or right side of the main rail.
 		-- Also returns offset as second return value.
 		local left_or_right = function(pos, vek)
-			local off, facedir
+			local off
 			if pr:next(1, 2) == 1 then
 				-- left
 				off = {x = -vek.z, y= 0, z = vek.x}
@@ -707,7 +705,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 					-- FIXME: The cart sometimes fails to spawn
 					-- See <https://github.com/minetest/minetest/issues/4759>
 					local cart_id = tsm_railcorridors.carts[cart_type]
-					local cart = minetest.add_entity(cpos, cart_id)
+					minetest.add_entity(cpos, cart_id)
 
 					-- This checks if the cart is actually spawned, it's a giant hack!
 					-- Note that the callback function is also called there.
@@ -932,7 +930,7 @@ local function place_corridors(main_cave_coords, psra)
 	}
 	local first_corridor
 	local corridors = 1
-	for i=1, 2 do
+	for _=1, 2 do
 		if pr:next(0,100) < 70 then
 			corridors = corridors + 1
 		end
