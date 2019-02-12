@@ -141,8 +141,8 @@ local function SetNodeIfCanBuild(pos, node, check_above)
 	end
 	local name = minetest.get_node(pos).name
 	local def = minetest.registered_nodes[name]
-	if name ~= "unknown" and name ~= "ignore" and def.is_ground_content and
-			(def.liquidtype == "none" or
+	if name ~= "unknown" and name ~= "ignore" and
+			((def.is_ground_content and def.liquidtype == "none") or
 			name == tsm_railcorridors.nodes.cobweb or
 			name == tsm_railcorridors.nodes.torch_wall or
 			name == tsm_railcorridors.nodes.torch_floor
@@ -202,7 +202,7 @@ end
 -- * Avoids floating rails for non-solid nodes like air
 -- Returns true if all nodes could be set
 -- Returns false if setting one or more nodes failed
-local function Cube(p, radius, node, replace_air_only)
+local function Cube(p, radius, node, replace_air_only, wood, post)
 	local y_top = p.y+radius
 	local nodedef = minetest.registered_nodes[node.name]
 	local solid = nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular") and nodedef.liquidtype == "none"
@@ -236,7 +236,19 @@ local function Cube(p, radius, node, replace_air_only)
 				local built = false
 				if ok then
 					if replace_air_only ~= true then
-						built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, node)
+						if post and (xi == p.x or zi == p.z) and thisnode.name == post then
+							minetest.set_node({x=xi,y=yi,z=zi}, node)
+							built = true
+						elseif wood and (xi == p.x or zi == p.z) and thisnode.name == wood then
+							local topnode = minetest.get_node({x=xi,y=yi+1,z=zi})
+							local topdef = minetest.registered_nodes[topnode.name]
+							if topdef.walkable and topnode.name ~= wood then
+								minetest.set_node({x=xi,y=yi,z=zi}, node)
+								built = true
+							end
+						else
+							built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, node)
+						end
 					else
 						if minetest.get_node({x=xi,y=yi,z=zi}).name == "air" then
 							built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, node)
@@ -440,7 +452,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 		torchdir = {3, 2}
 	end
 	for segmentindex = 0, segment_count-1 do
-		local dug = Cube(p, 1, {name="air"})
+		local dug = Cube(p, 1, {name="air"}, false, wood, post)
 		if not chaos_mode and segmentindex > 0 and not dug then return false, segmentindex end
 		-- Add wooden platform, if neccessary. To avoid floating rails
 		if segment_vector.y == 0 then
@@ -539,7 +551,7 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	end
 
 	-- End of the corridor segment; create the final piece
-	local dug = Cube(p, 1, {name="air"})
+	local dug = Cube(p, 1, {name="air"}, false, wood, post)
 	if not chaos_mode and not dug then return false, segment_count end
 	if segment_vector.y == 0 then
 		Platform({x=p.x, y=p.y-1, z=p.z}, 1, node_wood)
@@ -577,7 +589,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	end
 	local segcount = pr:next(4,6)
 	if up_or_down and up == false then
-		Cube(waypoint, 1, {name="air"})
+		Cube(waypoint, 1, {name="air"}, false, wood, post)
 	end
 	local corridor_dug, corridor_segments_dug = corridor_part(start, vek, segcount, wood, post, first_or_final, up_or_down_prev)
 	local corridor_vek = {x=vek.x*segcount, y=vek.y*segcount, z=vek.z*segcount}
