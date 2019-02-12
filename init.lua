@@ -128,7 +128,7 @@ end
 -- the node if it is allowed. Does never build in liquids.
 -- If check_above is true, don't build if the node above is attached (e.g. rail)
 -- or a liquid.
-local function SetNodeIfCanBuild(pos, node, check_above)
+local function SetNodeIfCanBuild(pos, node, check_above, can_replace_rail)
 	if check_above then
 		local abovename = minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z}).name
 		local abovedef = minetest.registered_nodes[abovename]
@@ -145,7 +145,8 @@ local function SetNodeIfCanBuild(pos, node, check_above)
 			((def.is_ground_content and def.liquidtype == "none") or
 			name == tsm_railcorridors.nodes.cobweb or
 			name == tsm_railcorridors.nodes.torch_wall or
-			name == tsm_railcorridors.nodes.torch_floor
+			name == tsm_railcorridors.nodes.torch_floor or
+			(can_replace_rail and name == tsm_railcorridors.nodes.rail)
 			) then
 		minetest.set_node(pos, node)
 		return true
@@ -425,10 +426,10 @@ local function TryPlaceCobweb(pos, needs_check, side_vector)
 end
 	
 local function WoodBulk(pos, wood)
-	SetNodeIfCanBuild({x=pos.x+1, y=pos.y, z=pos.z+1}, {name=wood})
-	SetNodeIfCanBuild({x=pos.x-1, y=pos.y, z=pos.z+1}, {name=wood})
-	SetNodeIfCanBuild({x=pos.x+1, y=pos.y, z=pos.z-1}, {name=wood})
-	SetNodeIfCanBuild({x=pos.x-1, y=pos.y, z=pos.z-1}, {name=wood})
+	SetNodeIfCanBuild({x=pos.x+1, y=pos.y, z=pos.z+1}, {name=wood}, false, true)
+	SetNodeIfCanBuild({x=pos.x-1, y=pos.y, z=pos.z+1}, {name=wood}, false, true)
+	SetNodeIfCanBuild({x=pos.x+1, y=pos.y, z=pos.z-1}, {name=wood}, false, true)
+	SetNodeIfCanBuild({x=pos.x-1, y=pos.y, z=pos.z-1}, {name=wood}, false, true)
 end
 
 -- Gänge mit Schienen
@@ -505,13 +506,13 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 				local left_ok = true
 				left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y-1, z=calc[2]}, node_fence)
 				if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y  , z=calc[2]}, node_fence) end
-				if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y+1, z=calc[2]}, node_wood) end
+				if left_ok then left_ok = SetNodeIfCanBuild({x=calc[1], y=p.y+1, z=calc[2]}, node_wood, false, true) end
 
 				-- Right post and planks
 				local right_ok = true
 				right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y-1, z=calc[4]}, node_fence)
 				if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y  , z=calc[4]}, node_fence) end
-				if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y+1, z=calc[4]}, node_wood) end
+				if right_ok then right_ok = SetNodeIfCanBuild({x=calc[3], y=p.y+1, z=calc[4]}, node_wood, false, true) end
 
 				-- Middle planks
 				local top_planks_ok = false
