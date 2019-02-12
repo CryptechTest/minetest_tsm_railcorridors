@@ -923,7 +923,7 @@ local function place_corridors(main_cave_coords, psra)
 		{axis="z", axis2="x", sign=true},
 	}
 	local first_corridor
-	local corridors = 1
+	local corridors = 2
 	for _=1, 2 do
 		if pr:next(0,100) < 70 then
 			corridors = corridors + 1
