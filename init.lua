@@ -104,15 +104,19 @@ local chaos_mode = minetest.settings:get_bool("tsm_railcorridors_chaos") or fals
 
 -- End of parameters
 
--- Random generators
+-- Random Perlin noise generators
 local pr, webperlin_major, webperlin_minor
+local pr_inited = false
 
 local function InitRandomizer(seed)
-	-- Mostly used for corridor gen.
-	pr = PseudoRandom(seed)
-	-- Used for cobweb generation, both noises have to reach a high value for cobwebs to appear
-	webperlin_major = PerlinNoise(934, 3, 0.6, 500)
-	webperlin_minor = PerlinNoise(834, 3, 0.6, 50)
+	if not pr_inited then
+		-- Mostly used for corridor gen.
+		pr = PseudoRandom(seed)
+		-- Used for cobweb generation, both noises have to reach a high value for cobwebs to appear
+		webperlin_major = PerlinNoise(934, 3, 0.6, 500)
+		webperlin_minor = PerlinNoise(834, 3, 0.6, 50)
+		pr_inited = true
+	end
 end
 
 
