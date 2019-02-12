@@ -252,6 +252,28 @@ local function Cube(p, radius, node, replace_air_only)
 	return built_all
 end
 
+function DirtRoom(p, radius, height)
+	local y_top = p.y-radius+height+1
+	local built_all = true
+	for xi = p.x-radius, p.x+radius do
+		for zi = p.z-radius, p.z+radius do
+			for yi = y_top, p.y-radius, -1 do
+				local thisnode = minetest.get_node({x=xi,y=yi,z=zi})
+				local built = false
+				if xi == p.x-radius or xi == p.x+radius or zi == p.z-radius or zi == p.z+radius or yi == p.y-radius or yi == y_top then
+					built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, {name=tsm_railcorridors.nodes.dirt})
+				else
+					built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, {name="air"})
+				end
+				if not built then
+					built_all = false
+				end
+			end
+		end
+	end
+	return built_all
+end
+
 local function Platform(p, radius, node)
 	for zi = p.z-radius, p.z+radius do
 		for xi = p.x-radius, p.x+radius do
@@ -825,18 +847,21 @@ local function place_corridors(main_cave_coords, psra)
 	end
 	--[[ Starter cube: A big hollow dirt cube from which the corridors will extend.
 	Corridor generation starts here. ]]
-	if pr:next(0, 100) < 50 then
-		Cube(main_cave_coords, 4, {name=tsm_railcorridors.nodes.dirt})
-		Cube(main_cave_coords, 3, {name="air"})
-		-- Center rail
-		PlaceRail({x=main_cave_coords.x, y=main_cave_coords.y-3, z=main_cave_coords.z}, damage)
-		main_cave_coords.y =main_cave_coords.y - 1
-	else
-		Cube(main_cave_coords, 3, {name=tsm_railcorridors.nodes.dirt})
-		Cube(main_cave_coords, 2, {name="air"})
-		-- Center rail
-		PlaceRail({x=main_cave_coords.x, y=main_cave_coords.y-2, z=main_cave_coords.z}, damage)
+	local size = pr:next(3, 7)
+	local height = pr:next(4, 7)
+	if height > size then
+		height = size
 	end
+	local floor_diff = 1
+	if pr:next(0, 100) < 50 then
+		floor_diff = 0
+	end
+
+	DirtRoom(main_cave_coords, size, height)
+	main_cave_coords.y =main_cave_coords.y-(size-2-floor_diff)
+	-- Center rail
+	PlaceRail({x=main_cave_coords.x, y=main_cave_coords.y-1-floor_diff, z=main_cave_coords.z}, damage)
+
 	local xs = pr:next(0, 2) < 1
 	local zs = pr:next(0, 2) < 1;
 
