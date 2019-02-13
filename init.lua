@@ -798,7 +798,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	end
 end
 
-local function start_corridor(waypoint, coord, sign, length, psra, wood, post, damage, no_spawner)
+local function start_corridor(waypoint, coord, sign, length, wood, post, damage, no_spawner)
 	local wp = waypoint
 	local c = coord
 	local s = sign
@@ -847,10 +847,10 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 		-- Fork?
 		if pr:next() < probability_fork then
 			local p = {x=wp.x, y=wp.y, z=wp.z}
-			start_corridor(wp, c, s, pr:next(way_min,way_max), psra, wood, post, damage, no_spawner)
+			start_corridor(wp, c, s, pr:next(way_min,way_max), wood, post, damage, no_spawner)
 			if c == "x" then c="z" else c="x" end
-			start_corridor(wp, c, s, pr:next(way_min,way_max), psra, wood, post, damage, no_spawner)
-			start_corridor(wp, c, not s, pr:next(way_min,way_max), psra, wood, post, damage, no_spawner)
+			start_corridor(wp, c, s, pr:next(way_min,way_max), wood, post, damage, no_spawner)
+			start_corridor(wp, c, not s, pr:next(way_min,way_max), wood, post, damage, no_spawner)
 			WoodBulk({x=p.x, y=p.y-1, z=p.z}, wood)
 			WoodBulk({x=p.x, y=p.y,   z=p.z}, wood)
 			WoodBulk({x=p.x, y=p.y+1, z=p.z}, wood)
@@ -893,7 +893,7 @@ end
 -- Start generation of a rail corridor system
 -- main_cave_coords is the center of the floor of the dirt room, from which
 -- all corridors expand.
-local function start_corridor_system(main_cave_coords, psra)
+local function start_corridor_system(main_cave_coords)
 	--[[ Start building in the ground. Prevents corridors starting
 	in mid-air or in liquids. ]]
 	if not IsGround(main_cave_coords) then
@@ -1001,12 +1001,12 @@ local function start_corridor_system(main_cave_coords, psra)
 			first_corridor = {sign=dir.sign, axis=dir.axis, axis2=dir.axis2, side_offset=side_offset, from_center=from_center}
 		end
 		local coords = vector.add(main_cave_coords, {[dir.axis] = from_center, y=0, [dir.axis2] = side_offset})
-		start_corridor(coords, dir.axis, dir.sign, pr:next(way_min,way_max), psra, wood, post, damage, false)
+		start_corridor(coords, dir.axis, dir.sign, pr:next(way_min,way_max), wood, post, damage, false)
 		table.remove(dirs, d)
 	end
 	if corridors == 5 then
 		local special_coords = vector.add(main_cave_coords, {[first_corridor.axis2] = -first_corridor.side_offset, y=0, [first_corridor.axis] = first_corridor.from_center})
-		start_corridor(special_coords, first_corridor.axis, first_corridor.sign, pr:next(way_min,way_max), psra, wood, post, damage, false)
+		start_corridor(special_coords, first_corridor.axis, first_corridor.sign, pr:next(way_min,way_max), wood, post, damage, false)
 	end
 
 	-- At this point, all corridors were generated and all nodes were set.
