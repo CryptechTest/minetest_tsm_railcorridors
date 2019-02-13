@@ -105,7 +105,7 @@ local chaos_mode = minetest.settings:get_bool("tsm_railcorridors_chaos") or fals
 -- End of parameters
 
 -- Random Perlin noise generators
-local pr, webperlin_major, webperlin_minor
+local pr, pr_carts, webperlin_major, webperlin_minor
 local pr_inited = false
 
 local function InitRandomizer()
@@ -113,6 +113,7 @@ local function InitRandomizer()
 		local seed = minetest.get_mapgen_setting("seed")
 		-- Mostly used for corridor gen.
 		pr = PseudoRandom(seed)
+		pr_carts = PseudoRandom(seed-654)
 		-- Used for cobweb generation, both noises have to reach a high value for cobwebs to appear
 		webperlin_major = PerlinNoise(934, 3, 0.6, 500)
 		webperlin_minor = PerlinNoise(834, 3, 0.6, 50)
@@ -352,37 +353,24 @@ local function PlaceChest(pos, param2)
 end
 
 -- This function checks if a cart has ACTUALLY been spawned.
--- If not, it tries to spawn it again, and again, until it succeeded or
--- it failed too often.
 -- To be calld by minetest.after.
--- This is a HORRIBLE workaround thanks to the fact that minetest.add_entity is unreliable as fuck
+-- This is a workaround thanks to the fact that minetest.add_entity is unreliable as fuck
 -- See: https://github.com/minetest/minetest/issues/4759
 -- FIXME: Kill this horrible hack with fire as soon you can.
 local function RecheckCartHack(params)
 	local pos = params[1]
 	local cart_id = params[2]
-	local tries = params[3]
-	tries = tries - 1
 	-- Find cart
 	for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 1)) do
 		if obj ~= nil and obj:get_luaentity().name == cart_id then
 			-- Cart found! We can now safely call the callback func.
 			-- (calling it earlier has the danger of failing)
+			minetest.log("info", "[tsm_railcorridors] Cart spawn succeeded: "..minetest.pos_to_string(pos))
 			tsm_railcorridors.on_construct_cart(pos, obj)
 			return
 		end
 	end
-	if tries <= 0 then
-		-- Abort if too many tries to avoid excessive function calls
-		return
-	end
-	-- No cart found! :-( Try again …
-	if minetest.get_node(pos).name == tsm_railcorridors.nodes.rail then
-		minetest.add_entity(pos, cart_id)
-		minetest.after(5, RecheckCartHack, {pos, cart_id, tries})
-		return
-	end
-	-- The rail may have been destroyed in the meantime, that's why the node is checked.
+	minetest.log("info", "[tsm_railcorridors] Cart spawn FAILED: "..minetest.pos_to_string(pos))
 end
 
 -- Try to place a cobweb.
@@ -685,7 +673,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 		end
 
 		-- Rail and cart
-		if i == cartplace then
+		if i == cartplace and #tsm_railcorridors.carts > 0 then
 			local cpos = left_or_right(p, vek)
 			if minetest.get_node(cpos).name == post then
 				cartplace = cartplace + 1
@@ -697,17 +685,18 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 					placed = false
 				end
 				if placed then
-					local cart_type = pr:next(1, #tsm_railcorridors.carts)
+					local cart_type = pr_carts:next(1, #tsm_railcorridors.carts)
 					-- FIXME: The cart sometimes fails to spawn
 					-- See <https://github.com/minetest/minetest/issues/4759>
 					local cart_id = tsm_railcorridors.carts[cart_type]
+					minetest.log("info", "[tsm_railcorridors] Cart spawn attempt: "..minetest.pos_to_string(cpos))
 					minetest.add_entity(cpos, cart_id)
 
 					-- This checks if the cart is actually spawned, it's a giant hack!
 					-- Note that the callback function is also called there.
 					-- TODO: Move callback function to this position when the
 					-- minetest.add_entity bug has been fixed.
-					minetest.after(3, RecheckCartHack, {cpos, cart_id, 12})
+					minetest.after(3, RecheckCartHack, {cpos, cart_id})
 				end
 			end
 		end
