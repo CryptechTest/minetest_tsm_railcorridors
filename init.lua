@@ -88,7 +88,7 @@ if setting ~= nil then
 end
 
 -- Max. and min. heights between rail corridors are generated
-local height_min = -31000
+local height_min = -30900
 local height_max = -30
 setting = tonumber(minetest.settings:get("tsm_railcorridors_height_min"))
 if setting then
@@ -827,7 +827,7 @@ local function start_corridor(waypoint, coord, sign, length, wood, post, damage,
 				up = true
 			else
 				-- Chose random direction in between
-				up = pr:next(0, 2) < 1
+				up = pr:next(1, 2) == 1
 			end
 		else
 			ud = false

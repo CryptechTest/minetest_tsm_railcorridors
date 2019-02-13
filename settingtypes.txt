@@ -35,10 +35,10 @@ tsm_railcorridors_place_cobwebs (Cobwebs) bool true
 tsm_railcorridors_probability_damage (Damaged railway probability) float 0.55 0.0 1.0
 
 #Minimum height in which rail corridors are created.
-tsm_railcorridors_height_min (Minimum height) int -31000 -31000 31000
+tsm_railcorridors_height_min (Minimum height) int -30900
 
 #Maximum height in which rail corridors are created.
-tsm_railcorridors_height_max (Maximum height) int -30 -31000 31000
+tsm_railcorridors_height_max (Maximum height) int -30
 
 #If enabled, rail corridors continue to generate through obstacles such
 #as other rail corridors (without destroying them, mostly). This may lead
