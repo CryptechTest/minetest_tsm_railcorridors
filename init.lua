@@ -528,12 +528,12 @@ local function WoodSupport(p, wood, post, torches, dir, torchdir)
 	end
 end
 
--- Corridors with rails
+-- Dig out a single corridor section and place wooden structures and torches
 
 -- Returns <success>, <segments>
 -- success: true if corridor could be placed entirely
 -- segments: Number of segments successfully placed
-local function corridor_part(start_point, segment_vector, segment_count, wood, post, up_or_down_prev)
+local function dig_corridor_section(start_point, segment_vector, segment_count, wood, post, up_or_down_prev)
 	local p = {x=start_point.x, y=start_point.y, z=start_point.z}
 	local torches = pr:next() < probability_torches_in_segment
 	local dir = {0, 0}
@@ -589,7 +589,11 @@ local function corridor_part(start_point, segment_vector, segment_count, wood, p
 	return true, segment_count
 end
 
-local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next, up_or_down_prev, up, wood, post, first_or_final, damage, no_spawner)
+-- Generate a corridor section. Corridor sections are part of a corridor line.
+-- This is one short part of a corridor line. It can be one straight section or it goes up or down.
+-- It digs out the corridor and places wood structs and torches using the helper function dig_corridor_function,
+-- then it places rails, chests, and other goodies.
+local function create_corridor_section(waypoint, axis, sign, up_or_down, up_or_down_next, up_or_down_prev, up, wood, post, first_or_final, damage, no_spawner)
 	local segamount = 3
 	if up_or_down then
 		segamount = 1
@@ -599,12 +603,12 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	end
 	local vek = {x=0,y=0,z=0};
 	local start = table.copy(waypoint)
-	if coord == "x" then
+	if axis == "x" then
 		vek.x=segamount
 		if up_or_down and up == false then
 			start.x=start.x+segamount
 		end
-	elseif coord == "z" then
+	elseif axis == "z" then
 		vek.z=segamount
 		if up_or_down and up == false then
 			start.z=start.z+segamount
@@ -621,7 +625,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	if up_or_down and up == false then
 		Cube(waypoint, 1, {name="air"}, false)
 	end
-	local corridor_dug, corridor_segments_dug = corridor_part(start, vek, segcount, wood, post, up_or_down_prev)
+	local corridor_dug, corridor_segments_dug = dig_corridor_section(start, vek, segcount, wood, post, up_or_down_prev)
 	local corridor_vek = {x=vek.x*segcount, y=vek.y*segcount, z=vek.z*segcount}
 
 	-- After this: rails
@@ -629,9 +633,9 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	if sign then
 		segamount = 0-segamount
 	end
-	if coord == "x" then
+	if axis == "x" then
 		vek.x=segamount
-	elseif coord == "z" then
+	elseif axis == "z" then
 		vek.z=segamount
 	end
 	if up_or_down then
@@ -786,7 +790,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 			offset.y = offset.y - 1
 			final_point = vector.add(waypoint, offset)
 		else
-			offset[coord] = offset[coord] + segamount
+			offset[axis] = offset[axis] + segamount
 			final_point = vector.add(waypoint, offset)
 			-- After going up or down, 1 missing rail piece must be added
 			if IsRailSurface({x=final_point.x,y=final_point.y-2,z=final_point.z}) then
@@ -801,9 +805,11 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 	end
 end
 
-local function start_corridor(waypoint, coord, sign, length, wood, post, damage, no_spawner)
+-- Generate a line of corridors.
+-- The corridor can go up/down, take turns and it can branch off, creating more corridor lines.
+local function create_corridor_line(waypoint, axis, sign, length, wood, post, damage, no_spawner)
 	local wp = waypoint
-	local c = coord
+	local a = axis
 	local s = sign
 	local ud = false -- Up or down
 	local udn = false -- Up or down is next
@@ -858,9 +864,9 @@ local function start_corridor(waypoint, coord, sign, length, wood, post, damage,
 		elseif i == 1 then
 			first_or_final = "first"
 		end
-		wp, no_spawner = corridor_func(wp,c,s, ud, udn, udp, up, wood, post, first_or_final, damage, no_spawner)
+		wp, no_spawner = create_corridor_section(wp,a,s, ud, udn, udp, up, wood, post, first_or_final, damage, no_spawner)
 		if wp == false then return end
-		-- Fork in the road? If so, starts 2-3 new corridors
+		-- Fork in the road? If so, starts 2-3 new corridor lines and terminates the current one.
 		if pr:next() < probability_fork then
 			-- 75% chance to fork off in 3 directions (making a crossing)
 			-- 25% chance to fork off in 2 directions (making a t-junction)
@@ -870,20 +876,20 @@ local function start_corridor(waypoint, coord, sign, length, wood, post, damage,
 				forks = 3
 			end
 			local p = {x=wp.x, y=wp.y, z=wp.z}
-			local c2
-			if c == "x" then
-				c2="z"
+			local a2
+			if a == "x" then
+				a2="z"
 			else
-				c2="x"
+				a2="x"
 			end
 			local fork_dirs = {
-				{c2, s}, -- to the side
-				{c2, not s}, -- to the other side
-				{c, s}, -- straight ahead
+				{a2, s}, -- to the side
+				{a2, not s}, -- to the other side
+				{a, s}, -- straight ahead
 			}
 			for f=1, forks do
 				local r = pr:next(1, #fork_dirs)
-				start_corridor(wp, fork_dirs[r][1], fork_dirs[r][2], pr:next(way_min,way_max), wood, post, damage, no_spawner)
+				create_corridor_line(wp, fork_dirs[r][1], fork_dirs[r][2], pr:next(way_min,way_max), wood, post, damage, no_spawner)
 				table.remove(fork_dirs, r)
 			end
 			if is_crossing then
@@ -892,11 +898,12 @@ local function start_corridor(waypoint, coord, sign, length, wood, post, damage,
 			end
 			return
 		end
-		-- Randomly change sign and coord
-		if c=="x" then
-			c="z"
-		elseif c=="z" then
-			c="x"
+		-- Randomly change sign, toggle axis.
+		-- In other words, take a turn.
+		if a=="x" then
+			a="z"
+		elseif a=="z" then
+			a="x"
 	 	end;
 		s = pr:next(0, 2) < 1
 	end
@@ -928,7 +935,7 @@ end
 -- Start generation of a rail corridor system
 -- main_cave_coords is the center of the floor of the dirt room, from which
 -- all corridors expand.
-local function start_corridor_system(main_cave_coords)
+local function create_corridor_system(main_cave_coords)
 	--[[ Start building in the ground. Prevents corridors starting
 	in mid-air or in liquids. ]]
 	if not IsGround(main_cave_coords) then
@@ -1036,12 +1043,12 @@ local function start_corridor_system(main_cave_coords)
 			first_corridor = {sign=dir.sign, axis=dir.axis, axis2=dir.axis2, side_offset=side_offset, from_center=from_center}
 		end
 		local coords = vector.add(main_cave_coords, {[dir.axis] = from_center, y=0, [dir.axis2] = side_offset})
-		start_corridor(coords, dir.axis, dir.sign, pr:next(way_min,way_max), wood, post, damage, false)
+		create_corridor_line(coords, dir.axis, dir.sign, pr:next(way_min,way_max), wood, post, damage, false)
 		table.remove(dirs, d)
 	end
 	if corridors == 5 then
 		local special_coords = vector.add(main_cave_coords, {[first_corridor.axis2] = -first_corridor.side_offset, y=0, [first_corridor.axis] = first_corridor.from_center})
-		start_corridor(special_coords, first_corridor.axis, first_corridor.sign, pr:next(way_min,way_max), wood, post, damage, false)
+		create_corridor_line(special_coords, first_corridor.axis, first_corridor.sign, pr:next(way_min,way_max), wood, post, damage, false)
 	end
 
 	-- At this point, all corridors were generated and all nodes were set.
@@ -1070,7 +1077,7 @@ minetest.register_on_generated(function(minp, maxp, blockseed)
 			local p = {x=minp.x+math.floor((maxp.x-minp.x)/2), y=y, z=minp.z+math.floor((maxp.z-minp.z)/2)}
 			-- Start corridor system at p. Might fail if p is in open air
 			minetest.log("verbose", "[tsm_railcorridors] Attempting to start rail corridor system at "..minetest.pos_to_string(p))
-			if start_corridor_system(p, pr) then
+			if create_corridor_system(p, pr) then
 				minetest.log("info", "[tsm_railcorridors] Generated rail corridor system at "..minetest.pos_to_string(p))
 				break
 			else
