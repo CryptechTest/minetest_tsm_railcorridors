@@ -823,12 +823,18 @@ local function start_corridor(waypoint, coord, sign, length, wood, post, damage,
 			ud = true
 			-- Force direction near the height limits
 			if wp.y >= height_max - 12 then
+				if udp then
+					ud = false
+				end
 				up = false
 			elseif wp.y <= height_min + 12 then
+				if udp then
+					ud = false
+				end
 				up = true
 			else
 				-- If previous was up/down, keep the vertical direction
-				if udp then
+				if udp and not chaos_mode then
 					up = upp
 				else
 					-- Chose random direction
