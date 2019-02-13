@@ -60,7 +60,7 @@ if setting then
 end
 
 -- Probability for every part of a corridor to contain a cart
-local probability_cart = P(0.1)
+local probability_cart = P(0.05)
 setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_cart"))
 if setting then
 	probability_cart = P(setting)
@@ -105,13 +105,15 @@ local chaos_mode = minetest.settings:get_bool("tsm_railcorridors_chaos") or fals
 -- End of parameters
 
 -- Random Perlin noise generators
-local pr, pr_carts, webperlin_major, webperlin_minor
+local pr, pr_carts, pr_treasures, webperlin_major, webperlin_minor
 
 local function InitRandomizer(seed)
 	-- Mostly used for corridor gen.
 	pr = PseudoRandom(seed)
 	-- Separate randomizer for carts because spawning carts is very timing-dependent
 	pr_carts = PseudoRandom(seed-654)
+	-- Chest contents randomizer
+	pr_treasures = PseudoRandom(seed+777)
 	-- Used for cobweb generation, both noises have to reach a high value for cobwebs to appear
 	webperlin_major = PerlinNoise(934, 3, 0.6, 500)
 	webperlin_minor = PerlinNoise(834, 3, 0.6, 50)
@@ -305,20 +307,20 @@ end
 local function rci()
 	if(minetest.get_modpath("treasurer") ~= nil) then
 		local treasures
-		if pr:next(0,100) < 3 then
+		if pr_treasures:next(0,100) < 3 then
 			treasures = treasurer.select_random_treasures(1,2,4)
-		elseif pr:next(0,100) < 5 then
+		elseif pr_treasures:next(0,100) < 5 then
 			if pr:next(0,100) < 50 then
 				treasures = treasurer.select_random_treasures(1,2,4,"seed")
 			else
 				treasures = treasurer.select_random_treasures(1,2,4,"seed")
 			end
-		elseif pr:next(0,1000) < 5 then
+		elseif pr_treasures:next(0,1000) < 5 then
 			if minetest.get_modpath("tnt") then
-				return "tnt:tnt "..pr:next(1,3)
+				return "tnt:tnt "..pr_treasures:next(1,3)
 			end
-		elseif pr:next(0,1000) < 3 then
-			if pr:next(0,1000) < 800 then
+		elseif pr_treasures:next(0,1000) < 3 then
+			if pr_treasures:next(0,1000) < 800 then
 				treasures = treasurer.select_random_treasures(1,3,6,"mineral")
 			else
 				treasures = treasurer.select_random_treasures(1,5,9,"mineral")
@@ -335,7 +337,7 @@ local function rci()
 			return ""
 		end
 	else
-		return tsm_railcorridors.get_default_treasure(pr)
+		return tsm_railcorridors.get_default_treasure(pr_treasures)
 	end
 end
 

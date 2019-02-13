@@ -68,54 +68,80 @@ function tsm_railcorridors.get_default_treasure(pr)
 	if pr:next(0,1000) < 30 then
 		return "farming:bread "..pr:next(1,3)
 	elseif pr:next(0,1000) < 50 then
-		-- Seeds and saplings.
-		-- This includes saplings which are normally unobtainable in v6. :-)
-
+		-- Seeds
 		local r = pr:next(0,1000)
-		-- 25%
-		if r < 250 then
+		-- 50%
+		if r < 500 then
 			return "farming:seed_cotton "..pr:next(1,5)
-		-- 25%
-		elseif r < 500 then
-			return "farming:seed_wheat "..pr:next(1,5)
-		-- 20%
-		elseif r < 700 then
-			return "default:sapling "..pr:next(1,4)
-		-- 13%
-		elseif r < 830 then
-			return "default:acacia_sapling "..pr:next(1,2)
-		-- 13%
-		elseif r < 960 then
-			return "default:aspen_sapling "..pr:next(1,3)
-		-- 2.5%
-		elseif r < 985 then
-			return "default:bush_sapling "..pr:next(1,4)
-		-- 1.5%
+		-- 50%
 		else
-			return "default:acacia_bush_sapling "..pr:next(1,4)
+			return "farming:seed_wheat "..pr:next(1,5)
 		end
 	elseif pr:next(0,1000) < 5 then
 		return "tnt:tnt "..pr:next(1,3)
+	elseif pr:next(0,1000) < 10 then
+		return "carts:cart"
+	elseif pr:next(0,1000) < 13 then
+		local r = pr:next(0,1000)
+		if r < 100 then
+			return "carts:brakerail "..pr:next(4, 16)
+		elseif r < 433 then
+			return "carts:powerrail "..pr:next(3, 8)
+		else
+			return "carts:rail "..pr:next(2,16)
+		end
 	elseif pr:next(0,1000) < 5 then
-		return "default:pick_steel"
+		local r = pr:next(0,1000)
+		if r < 600 then
+			return "default:pick_steel"
+		elseif r < 950 then
+			return "default:pick_bronze"
+		else
+			return "default:pick_mese 1 "..(pr:next(0, 6400)*5)
+		end
+	elseif pr:next(0,1000) < 25 then
+		-- Saplings. This includes saplings which are normally unobtainable in v6. :-)
+		local r = pr:next(0,1000)
+		-- 40%
+		if r < 400 then
+			return "default:sapling "..pr:next(1,4)
+		-- 26%
+		elseif r < 660 then
+			return "default:acacia_sapling "..pr:next(1,2)
+		-- 26%
+		elseif r < 920 then
+			return "default:aspen_sapling "..pr:next(1,3)
+		-- 5%
+		elseif r < 970 then
+			return "default:bush_sapling "..pr:next(1,4)
+		-- 3%
+		else
+			return "default:acacia_bush_sapling "..pr:next(1,4)
+		end
 	elseif pr:next(0,1000) < 3 then
 		local r = pr:next(0, 1000)
 		if r < 400 then
-			return "default:steel_ingot "..pr:next(1,5)
+			return "default:steel_ingot "..pr:next(1,7)
 		elseif r < 700 then
-			return "default:gold_ingot "..pr:next(1,3)
+			return "default:gold_ingot "..pr:next(1,4)
 		elseif r < 900 then
 			return "default:mese_crystal "..pr:next(1,3)
 		else
 			return "default:diamond "..pr:next(1,2)
 		end
-	elseif pr:next(0,1000) < 30 then
-		return "default:torch "..pr:next(1,16)
+	elseif pr:next(0,1000) < 2 then
+		local r = pr:next(0,1000)
+		if r < 900 then
+			return "default:shovel_steel"
+		else
+			return "default:shovel_bronze"
+		end
+	elseif pr:next(0,1000) < 2 then
+		return "default:torch "..pr:next(4,99)
 	elseif pr:next(0,1000) < 20 then
 		return "default:coal_lump "..pr:next(3,8)
 	else
 		return ""
 	end
 end
-
 
