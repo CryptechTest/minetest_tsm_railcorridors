@@ -198,7 +198,15 @@ end
 
 -- Create a cube filled with the specified nodes
 -- Specialties:
--- * Avoids floating rails for non-solid nodes like air
+-- * Avoids floating rails
+-- * May cut into wood structures of the corridors (alongside with their torches)
+-- Arguments:
+-- * p: Center position
+-- * radius: How many nodes from the center the cube will extend
+-- * node: Node to set
+-- * replace_air_only: If true, only air can be replaced
+-- * wood, post: Wood and post nodes of the railway corridor to cut into (optional)
+
 -- Returns true if all nodes could be set
 -- Returns false if setting one or more nodes failed
 local function Cube(p, radius, node, replace_air_only, wood, post)
@@ -208,6 +216,8 @@ local function Cube(p, radius, node, replace_air_only, wood, post)
 	-- Check if all the nodes could be set
 	local built_all = true
 
+	-- If wood has been removed, remod
+	local cleanup_torches = {}
 	for xi = p.x-radius, p.x+radius do
 		for zi = p.z-radius, p.z+radius do
 			local column_last_attached = nil
@@ -235,6 +245,7 @@ local function Cube(p, radius, node, replace_air_only, wood, post)
 				local built = false
 				if ok then
 					if replace_air_only ~= true then
+						-- Cut into wood structures (post/wood)
 						if post and (xi == p.x or zi == p.z) and thisnode.name == post then
 							minetest.set_node({x=xi,y=yi,z=zi}, node)
 							built = true
@@ -243,8 +254,17 @@ local function Cube(p, radius, node, replace_air_only, wood, post)
 							local topdef = minetest.registered_nodes[topnode.name]
 							if topdef.walkable and topnode.name ~= wood then
 								minetest.set_node({x=xi,y=yi,z=zi}, node)
+								-- Check for torches around the wood and schedule them
+								-- for removal
+								if node.name == "air" then
+									table.insert(cleanup_torches, {x=xi+1,y=yi,z=zi})
+									table.insert(cleanup_torches, {x=xi-1,y=yi,z=zi})
+									table.insert(cleanup_torches, {x=xi,y=yi,z=zi+1})
+									table.insert(cleanup_torches, {x=xi,y=yi,z=zi-1})
+								end
 								built = true
 							end
+						-- Set node normally
 						else
 							built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, node)
 						end
@@ -258,6 +278,13 @@ local function Cube(p, radius, node, replace_air_only, wood, post)
 					built_all = false
 				end
 			end
+		end
+	end
+	-- Remove torches we have detected before
+	for c=1, #cleanup_torches do
+		local check = minetest.get_node(cleanup_torches[c])
+		if check.name == tsm_railcorridors.nodes.torch_wall or check.name == tsm_railcorridors.nodes.torch_floor then
+			minetest.set_node(cleanup_torches[c], node)
 		end
 	end
 	return built_all
