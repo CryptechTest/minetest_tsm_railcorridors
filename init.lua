@@ -808,7 +808,8 @@ local function start_corridor(waypoint, coord, sign, length, wood, post, damage,
 	local ud = false -- Up or down
 	local udn = false -- Up or down is next
 	local udp = false -- Up or down was previous
-	local up
+	local up = false -- true if going up
+	local upp = false -- true if was going up previously
 	for i=1,length do
 		local needs_platform
 		-- Update previous up/down status
@@ -826,9 +827,15 @@ local function start_corridor(waypoint, coord, sign, length, wood, post, damage,
 			elseif wp.y <= height_min + 12 then
 				up = true
 			else
-				-- Chose random direction in between
-				up = pr:next(1, 2) == 1
+				-- If previous was up/down, keep the vertical direction
+				if udp then
+					up = upp
+				else
+					-- Chose random direction
+					up = pr:next(1, 2) == 1
+				end
 			end
+			upp = up
 		else
 			ud = false
 		end
