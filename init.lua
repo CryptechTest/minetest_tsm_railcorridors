@@ -118,6 +118,7 @@ local function InitRandomizer(seed)
 	pr_inited = true
 end
 
+local carts_table = {}
 
 -- Checks if the mapgen is allowed to carve through this structure and only sets
 -- the node if it is allowed. Does never build in liquids.
@@ -669,7 +670,7 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 			end
 		end
 
-		-- Rail and cart
+		-- A rail at the side of the track to put a cart on
 		if i == cartplace and #tsm_railcorridors.carts > 0 then
 			local cpos = left_or_right(p, vek)
 			if minetest.get_node(cpos).name == post then
@@ -682,18 +683,10 @@ local function corridor_func(waypoint, coord, sign, up_or_down, up_or_down_next,
 					placed = false
 				end
 				if placed then
+					-- We don't put on a cart yet, we put it in the carts table
+					-- for later placement
 					local cart_type = pr_carts:next(1, #tsm_railcorridors.carts)
-					-- FIXME: The cart sometimes fails to spawn
-					-- See <https://github.com/minetest/minetest/issues/4759>
-					local cart_id = tsm_railcorridors.carts[cart_type]
-					minetest.log("info", "[tsm_railcorridors] Cart spawn attempt: "..minetest.pos_to_string(cpos))
-					minetest.add_entity(cpos, cart_id)
-
-					-- This checks if the cart is actually spawned, it's a giant hack!
-					-- Note that the callback function is also called there.
-					-- TODO: Move callback function to this position when the
-					-- minetest.add_entity bug has been fixed.
-					minetest.after(3, RecheckCartHack, {cpos, cart_id})
+					table.insert(carts_table, {pos = cpos, cart_type = cart_type})
 				end
 			end
 		end
@@ -844,6 +837,29 @@ local function start_corridor(waypoint, coord, sign, length, psra, wood, post, d
 	end
 end
 
+-- Spawns all carts in the carts table and clears the carts table afterwards
+local function spawn_carts()
+	for c=1, #carts_table do
+		local cpos = carts_table[c].pos
+		local cart_type = carts_table[c].cart_type
+		local node = minetest.get_node(cpos)
+		if node.name == tsm_railcorridors.nodes.rail then
+			-- FIXME: The cart sometimes fails to spawn
+			-- See <https://github.com/minetest/minetest/issues/4759>
+			local cart_id = tsm_railcorridors.carts[cart_type]
+			minetest.log("info", "[tsm_railcorridors] Cart spawn attempt: "..minetest.pos_to_string(cpos))
+			minetest.add_entity(cpos, cart_id)
+
+			-- This checks if the cart is actually spawned, it's a giant hack!
+			-- Note that the callback function is also called there.
+			-- TODO: Move callback function to this position when the
+			-- minetest.add_entity bug has been fixed.
+			minetest.after(3, RecheckCartHack, {cpos, cart_id})
+		end
+	end
+	carts_table = {}
+end
+
 local function place_corridors(main_cave_coords, psra)
 	--[[ ALWAYS start building in the ground. Prevents corridors starting
 	in mid-air or in liquids. ]]
@@ -960,6 +976,9 @@ local function place_corridors(main_cave_coords, psra)
 		start_corridor(special_coords, first_corridor.axis, first_corridor.sign, pr:next(way_min,way_max), psra, wood, post, damage, false)
 	end
 
+	-- At this point, all corridors were generated and all nodes were set.
+	-- We spawn the carts now
+	spawn_carts()
 end
 
 -- The rail corridor algorithm starts here
