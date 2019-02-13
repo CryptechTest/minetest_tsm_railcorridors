@@ -106,19 +106,16 @@ local chaos_mode = minetest.settings:get_bool("tsm_railcorridors_chaos") or fals
 
 -- Random Perlin noise generators
 local pr, pr_carts, webperlin_major, webperlin_minor
-local pr_inited = false
 
-local function InitRandomizer()
-	if not pr_inited then
-		local seed = minetest.get_mapgen_setting("seed")
-		-- Mostly used for corridor gen.
-		pr = PseudoRandom(seed)
-		pr_carts = PseudoRandom(seed-654)
-		-- Used for cobweb generation, both noises have to reach a high value for cobwebs to appear
-		webperlin_major = PerlinNoise(934, 3, 0.6, 500)
-		webperlin_minor = PerlinNoise(834, 3, 0.6, 50)
-		pr_inited = true
-	end
+local function InitRandomizer(seed)
+	-- Mostly used for corridor gen.
+	pr = PseudoRandom(seed)
+	-- Separate randomizer for carts because spawning carts is very timing-dependent
+	pr_carts = PseudoRandom(seed-654)
+	-- Used for cobweb generation, both noises have to reach a high value for cobwebs to appear
+	webperlin_major = PerlinNoise(934, 3, 0.6, 500)
+	webperlin_minor = PerlinNoise(834, 3, 0.6, 50)
+	pr_inited = true
 end
 
 
@@ -967,7 +964,9 @@ end
 
 -- The rail corridor algorithm starts here
 minetest.register_on_generated(function(minp, maxp, blockseed)
-	InitRandomizer()
+	-- We re-init the randomizer for every mapblock as we start generating in the middle of each mapblock.
+	-- We can't use the mapgen seed as this would make the algorithm depending on the order the mapblocks generate.
+	InitRandomizer(blockseed)
 	if minp.y < height_max and maxp.y > height_min and pr:next() < probability_railcaves_in_chunk then
 		-- Get semi-random height in chunk
 		local buffer = 5
