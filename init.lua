@@ -291,15 +291,16 @@ local function Cube(p, radius, node, replace_air_only, wood, post)
 end
 
 local function DirtRoom(p, radius, height, dirt_mode)
-	local y_top = p.y-radius+height+1
+	local y_bottom = p.y
+	local y_top = y_bottom + height + 1
 	local built_all = true
 	for xi = p.x-radius, p.x+radius do
 		for zi = p.z-radius, p.z+radius do
-			for yi = y_top, p.y-radius, -1 do
+			for yi = y_top, y_bottom, -1 do
 				local thisnode = minetest.get_node({x=xi,y=yi,z=zi})
 				local built = false
-				if xi == p.x-radius or xi == p.x+radius or zi == p.z-radius or zi == p.z+radius or yi == p.y-radius or yi == y_top then
-					if dirt_mode == 1 or yi == p.y-radius then
+				if xi == p.x-radius or xi == p.x+radius or zi == p.z-radius or zi == p.z+radius or yi == y_bottom or yi == y_top then
+					if dirt_mode == 1 or yi == y_bottom then
 						built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, {name=tsm_railcorridors.nodes.dirt})
 					elseif (dirt_mode == 2 or dirt_mode == 3) and yi == y_top then
 						if minetest.get_item_group(thisnode.name, "falling_node") == 1 then
@@ -889,11 +890,14 @@ local function spawn_carts()
 	carts_table = {}
 end
 
+-- Start generation of a rail corridor system
+-- main_cave_coords is the center of the floor of the dirt room, from which
+-- all corridors expand.
 local function place_corridors(main_cave_coords, psra)
-	--[[ ALWAYS start building in the ground. Prevents corridors starting
+	--[[ Start building in the ground. Prevents corridors starting
 	in mid-air or in liquids. ]]
 	if not IsGround(main_cave_coords) then
-		return
+		return false
 	end
 	local center_node = minetest.get_node(main_cave_coords)
 
@@ -916,7 +920,7 @@ local function place_corridors(main_cave_coords, psra)
 	local dirt_mode = pr:next(1,2)
 
 	DirtRoom(main_cave_coords, size, height, dirt_mode)
-	main_cave_coords.y =main_cave_coords.y-(size-2-floor_diff)
+	main_cave_coords.y = main_cave_coords.y + 2 + floor_diff
 
 	-- Get wood and fence post types, using gameconfig.
 
@@ -1008,6 +1012,8 @@ local function place_corridors(main_cave_coords, psra)
 	-- At this point, all corridors were generated and all nodes were set.
 	-- We spawn the carts now
 	spawn_carts()
+
+	return true
 end
 
 -- The rail corridor algorithm starts here
