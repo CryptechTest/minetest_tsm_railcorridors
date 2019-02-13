@@ -893,7 +893,7 @@ end
 -- Start generation of a rail corridor system
 -- main_cave_coords is the center of the floor of the dirt room, from which
 -- all corridors expand.
-local function place_corridors(main_cave_coords, psra)
+local function start_corridor_system(main_cave_coords, psra)
 	--[[ Start building in the ground. Prevents corridors starting
 	in mid-air or in liquids. ]]
 	if not IsGround(main_cave_coords) then
@@ -1022,14 +1022,25 @@ minetest.register_on_generated(function(minp, maxp, blockseed)
 	-- We can't use the mapgen seed as this would make the algorithm depending on the order the mapblocks generate.
 	InitRandomizer(blockseed)
 	if minp.y < height_max and maxp.y > height_min and pr:next() < probability_railcaves_in_chunk then
-		-- Get semi-random height in chunk
+		-- Keep some distance from the upper/lower mapblock limits
 		local buffer = 5
-		local y = pr:next(minp.y + buffer, maxp.y - buffer)
-		y = math.floor(math.max(height_min + buffer, math.min(height_max - buffer, y)))
 
-		-- Mid point of the chunk
-		local p = {x=minp.x+math.floor((maxp.x-minp.x)/2), y=y, z=minp.z+math.floor((maxp.z-minp.z)/2)}
-		-- Start placing corridors, beginning with a dirt room
-		place_corridors(p, pr)
+		-- Do up to 10 tries to start a corridor system
+		for t=1,10 do
+			-- Get semi-random height in chunk
+			local y = pr:next(minp.y + buffer, maxp.y - buffer)
+			y = math.floor(math.max(height_min + buffer, math.min(height_max - buffer, y)))
+
+			-- Mid point of the chunk
+			local p = {x=minp.x+math.floor((maxp.x-minp.x)/2), y=y, z=minp.z+math.floor((maxp.z-minp.z)/2)}
+			-- Start corridor system at p. Might fail if p is in open air
+			minetest.log("verbose", "[tsm_railcorridors] Attempting to start rail corridor system at "..minetest.pos_to_string(p))
+			if start_corridor_system(p, pr) then
+				minetest.log("info", "[tsm_railcorridors] Generated rail corridor system at "..minetest.pos_to_string(p))
+				break
+			else
+				minetest.log("info", "[tsm_railcorridors] Rail corridor system generation attempt failed at "..minetest.pos_to_string(p).. " (try "..t..")")
+			end
+		end
 	end
 end)
