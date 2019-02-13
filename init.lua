@@ -1018,11 +1018,11 @@ end
 
 -- The rail corridor algorithm starts here
 minetest.register_on_generated(function(minp, maxp, blockseed)
-	-- We re-init the randomizer for every mapblock as we start generating in the middle of each mapblock.
-	-- We can't use the mapgen seed as this would make the algorithm depending on the order the mapblocks generate.
+	-- We re-init the randomizer for every chunk as we start generating in the middle of each chunk.
+	-- We can't use the mapgen seed as this would make the algorithm depending on the order the chunk generate.
 	InitRandomizer(blockseed)
 	if minp.y < height_max and maxp.y > height_min and pr:next() < probability_railcaves_in_chunk then
-		-- Keep some distance from the upper/lower mapblock limits
+		-- Keep some distance from the upper/lower chunk limits
 		local buffer = 5
 
 		-- Do up to 10 tries to start a corridor system
