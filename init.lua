@@ -438,11 +438,14 @@ local function TryPlaceCobweb(pos, needs_check, side_vector)
 	end
 end
 
-local function WoodBulk(pos, wood)
-	SetNodeIfCanBuild({x=pos.x+1, y=pos.y, z=pos.z+1}, {name=wood}, false, true)
-	SetNodeIfCanBuild({x=pos.x-1, y=pos.y, z=pos.z+1}, {name=wood}, false, true)
-	SetNodeIfCanBuild({x=pos.x+1, y=pos.y, z=pos.z-1}, {name=wood}, false, true)
-	SetNodeIfCanBuild({x=pos.x-1, y=pos.y, z=pos.z-1}, {name=wood}, false, true)
+-- 4 wooden pillars around pos at height
+local function WoodBulk(pos, height, wood)
+	for y=0, height-1 do
+		SetNodeIfCanBuild({x=pos.x+1, y=pos.y+y, z=pos.z+1}, {name=wood}, false, true)
+		SetNodeIfCanBuild({x=pos.x-1, y=pos.y+y, z=pos.z+1}, {name=wood}, false, true)
+		SetNodeIfCanBuild({x=pos.x+1, y=pos.y+y, z=pos.z-1}, {name=wood}, false, true)
+		SetNodeIfCanBuild({x=pos.x-1, y=pos.y+y, z=pos.z-1}, {name=wood}, false, true)
+	end
 end
 
 -- Build a wooden support frame
@@ -844,17 +847,36 @@ local function start_corridor(waypoint, coord, sign, length, wood, post, damage,
 		end
 		wp, no_spawner = corridor_func(wp,c,s, ud, udn, udp, up, wood, post, first_or_final, damage, no_spawner)
 		if wp == false then return end
-		-- Fork?
+		-- Fork in the road? If so, starts 2-3 new corridors
 		if pr:next() < probability_fork then
+			-- 75% chance to fork off in 3 directions (making a crossing)
+			-- 25% chance to fork off in 2 directions (making a t-junction)
+			local is_crossing = pr:next(0, 3) < 3
+			local forks = 2
+			if is_crossing then
+				forks = 3
+			end
 			local p = {x=wp.x, y=wp.y, z=wp.z}
-			start_corridor(wp, c, s, pr:next(way_min,way_max), wood, post, damage, no_spawner)
-			if c == "x" then c="z" else c="x" end
-			start_corridor(wp, c, s, pr:next(way_min,way_max), wood, post, damage, no_spawner)
-			start_corridor(wp, c, not s, pr:next(way_min,way_max), wood, post, damage, no_spawner)
-			WoodBulk({x=p.x, y=p.y-1, z=p.z}, wood)
-			WoodBulk({x=p.x, y=p.y,   z=p.z}, wood)
-			WoodBulk({x=p.x, y=p.y+1, z=p.z}, wood)
-			WoodBulk({x=p.x, y=p.y+2, z=p.z}, wood)
+			local c2
+			if c == "x" then
+				c2="z"
+			else
+				c2="x"
+			end
+			local fork_dirs = {
+				{c2, s}, -- to the side
+				{c2, not s}, -- to the other side
+				{c, s}, -- straight ahead
+			}
+			for f=1, forks do
+				local r = pr:next(1, #fork_dirs)
+				start_corridor(wp, fork_dirs[r][1], fork_dirs[r][2], pr:next(way_min,way_max), wood, post, damage, no_spawner)
+				table.remove(fork_dirs, r)
+			end
+			if is_crossing then
+				-- 4 large wooden pillars around the center rail
+				WoodBulk({x=p.x, y=p.y-1, z=p.z}, 4, wood)
+			end
 			return
 		end
 		-- Randomly change sign and coord
