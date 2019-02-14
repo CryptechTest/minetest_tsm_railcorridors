@@ -122,6 +122,15 @@ end
 
 local carts_table = {}
 
+local dirt_room_coords
+
+-- Returns true if pos is inside the dirt room of the current corridor system
+local function IsInDirtRoom(pos)
+	local min = dirt_room_coords.min
+	local max = dirt_room_coords.max
+	return pos.x >= min.x and pos.x <= max.x and pos.y >= min.y and pos.y <= max.y and pos.z >= min.z and pos.z <= max.z
+end
+
 -- Checks if the mapgen is allowed to carve through this structure and only sets
 -- the node if it is allowed. Does never build in liquids.
 -- If check_above is true, don't build if the node above is attached (e.g. rail)
@@ -293,6 +302,10 @@ end
 local function DirtRoom(p, radius, height, dirt_mode)
 	local y_bottom = p.y
 	local y_top = y_bottom + height + 1
+	dirt_room_coords = {
+		min = { x = p.x-radius, y = y_bottom, z = p.z-radius },
+		max = { x = p.x+radius, y = y_top, z = p.z+radius },
+	}
 	local built_all = true
 	for xi = p.x-radius, p.x+radius do
 		for zi = p.z-radius, p.z+radius do
@@ -700,7 +713,7 @@ local function create_corridor_section(waypoint, axis, sign, up_or_down, up_or_d
 		-- Chest
 		if i == chestplace then
 			local cpos, offset = left_or_right(p, vek)
-			if minetest.get_node(cpos).name == post then
+			if minetest.get_node(cpos).name == post or IsInDirtRoom(p) then
 				chestplace = chestplace + 1
 			else
 				PlaceChest(cpos, minetest.dir_to_facedir(offset))
@@ -892,7 +905,7 @@ local function create_corridor_line(waypoint, axis, sign, length, wood, post, da
 				create_corridor_line(wp, fork_dirs[r][1], fork_dirs[r][2], pr:next(way_min,way_max), wood, post, damage, no_spawner)
 				table.remove(fork_dirs, r)
 			end
-			if is_crossing then
+			if is_crossing and not IsInDirtRoom(p) then
 				-- 4 large wooden pillars around the center rail
 				WoodBulk({x=p.x, y=p.y-1, z=p.z}, 4, wood)
 			end
