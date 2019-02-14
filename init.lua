@@ -936,21 +936,29 @@ end
 -- main_cave_coords is the center of the floor of the dirt room, from which
 -- all corridors expand.
 local function create_corridor_system(main_cave_coords)
-	--[[ Start building in the ground. Prevents corridors starting
-	in mid-air or in liquids. ]]
-	if not IsGround(main_cave_coords) then
-		return false
+
+	-- Dirt room size
+	local size = pr:next(3, 9)
+
+	--[[ Only build if starter coords are in the ground.
+	Prevents corridors starting in mid-air or in liquids. ]]
+	local check_coords = {
+		-- Center of the room, on the floor
+		{x=0,y=0,z=0},
+		-- Also check near the 4 bottom corners of the dirt room
+		{x= size-1, y=0, z=size-1},
+		{x=-size+1, y=0, z=size-1},
+		{x= size-1, y=0, z=-size+1},
+		{x=-size+1, y=0, z=-size+1},
+	}
+	for c=1, #check_coords do
+		if not IsGround(vector.add(main_cave_coords, check_coords[c])) then
+			return false
+		end
 	end
+
 	local center_node = minetest.get_node(main_cave_coords)
 
-	-- Determine if this corridor system is “damaged” (some rails removed) and to which extent
-	local damage = 0
-	if pr:next() < probability_damage then
-		damage = pr:next(10, 50)
-	end
-	--[[ Starter cube: A big hollow dirt cube from which the corridors will extend.
-	Corridor generation starts here. ]]
-	local size = pr:next(3, 9)
 	local height = pr:next(4, 7)
 	if height > size then
 		height = size
@@ -961,8 +969,16 @@ local function create_corridor_system(main_cave_coords)
 	end
 	local dirt_mode = pr:next(1,2)
 
+	--[[ Starting point: A big hollow dirt cube from which the corridors will extend.
+	Corridor generation starts here. ]]
 	DirtRoom(main_cave_coords, size, height, dirt_mode)
 	main_cave_coords.y = main_cave_coords.y + 2 + floor_diff
+
+	-- Determine if this corridor system is “damaged” (some rails removed) and to which extent
+	local damage = 0
+	if pr:next() < probability_damage then
+		damage = pr:next(10, 50)
+	end
 
 	-- Get wood and fence post types, using gameconfig.
 
