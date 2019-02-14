@@ -842,15 +842,12 @@ local function create_corridor_line(waypoint, axis, sign, length, wood, post, da
 	local up = false -- true if going up
 	local upp = false -- true if was going up previously
 	for i=1,length do
-		local needs_platform
 		-- Update previous up/down status
 		udp = ud
+		-- Can't go up/down if a platform is needed at waypoint
+		local needs_platform = NeedsPlatform({x=wp.x,y=wp.y-2,z=wp.z})
 		-- Update current up/down status
-		if udn then
-			needs_platform = NeedsPlatform(wp)
-			if needs_platform then
-				ud = false
-			end
+		if udn and not needs_platform then
 			ud = true
 			-- Force direction near the height limits
 			if wp.y >= height_max - 12 then
