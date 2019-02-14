@@ -12,11 +12,11 @@ local P = function (float)
 	return math.floor(32767 * float)
 end
 
--- Probability for every newly generated chunk to get corridors
-local probability_railcaves_in_chunk = P(0.33333)
-setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_railcaves_in_chunk"))
+-- Probability for every newly generated mapchunk to get corridors
+local probability_railcaves_in_mapchunk = P(0.33333)
+setting = tonumber(minetest.settings:get("tsm_railcorridors_probability_railcaves_in_mapchunk"))
 if setting then
-	probability_railcaves_in_chunk = P(setting)
+	probability_railcaves_in_mapchunk = P(setting)
 end
 
 -- Minimal and maximal value of path length (forks don't look up this value)
@@ -1108,20 +1108,20 @@ end
 
 -- The rail corridor algorithm starts here
 minetest.register_on_generated(function(minp, maxp, blockseed)
-	-- We re-init the randomizer for every chunk as we start generating in the middle of each chunk.
-	-- We can't use the mapgen seed as this would make the algorithm depending on the order the chunk generate.
+	-- We re-init the randomizer for every mapchunk as we start generating in the middle of each mapchunk.
+	-- We can't use the mapgen seed as this would make the algorithm depending on the order the mapchunk generate.
 	InitRandomizer(blockseed)
-	if minp.y < height_max and maxp.y > height_min and pr:next() < probability_railcaves_in_chunk then
-		-- Keep some distance from the upper/lower chunk limits
+	if minp.y < height_max and maxp.y > height_min and pr:next() < probability_railcaves_in_mapchunk then
+		-- Keep some distance from the upper/lower mapchunk limits
 		local buffer = 5
 
 		-- Do up to 10 tries to start a corridor system
 		for t=1,10 do
-			-- Get semi-random height in chunk
+			-- Get semi-random height in mapchunk
 			local y = pr:next(minp.y + buffer, maxp.y - buffer)
 			y = math.floor(math.max(height_min + buffer, math.min(height_max - buffer, y)))
 
-			-- Mid point of the chunk
+			-- Mid point of the mapchunk
 			local p = {x=minp.x+math.floor((maxp.x-minp.x)/2), y=y, z=minp.z+math.floor((maxp.z-minp.z)/2)}
 			-- Start corridor system at p. Might fail if p is in open air
 			minetest.log("verbose", "[tsm_railcorridors] Attempting to start rail corridor system at "..minetest.pos_to_string(p))
