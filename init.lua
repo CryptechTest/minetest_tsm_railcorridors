@@ -198,8 +198,7 @@ local function NeedsPlatform(pos)
 	local nodedef = minetest.registered_nodes[node.name]
 	return
 		-- Node can be replaced if ground content or rail
-		-- Rail is replacable to prevent odd rail slopes.
-		(node.name ~= "ignore" and node.name ~= "unknown" and (nodedef.is_ground_content or node.name == tsm_railcorridors.nodes.rail)) and
+		(node.name ~= "ignore" and node.name ~= "unknown" and nodedef.is_ground_content) and
 		-- Node needs platform if node below is not walkable.
 		-- Unless 2 nodes below there is dirt: This is a special case for the starter cube.
 		((nodedef.walkable == false and node2.name ~= tsm_railcorridors.nodes.dirt) or
