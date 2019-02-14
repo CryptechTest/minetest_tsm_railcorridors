@@ -105,11 +105,13 @@ local chaos_mode = minetest.settings:get_bool("tsm_railcorridors_chaos") or fals
 -- End of parameters
 
 -- Random Perlin noise generators
-local pr, pr_carts, pr_treasures, webperlin_major, webperlin_minor
+local pr, pr_carts, pr_treasures, pr_deco, webperlin_major, webperlin_minor
 
 local function InitRandomizer(seed)
 	-- Mostly used for corridor gen.
 	pr = PseudoRandom(seed)
+	-- Dirt room decorations
+	pr_deco = PseudoRandom(seed+25)
 	-- Separate randomizer for carts because spawning carts is very timing-dependent
 	pr_carts = PseudoRandom(seed-654)
 	-- Chest contents randomizer
@@ -299,7 +301,7 @@ local function Cube(p, radius, node, replace_air_only, wood, post)
 	return built_all
 end
 
-local function DirtRoom(p, radius, height, dirt_mode)
+local function DirtRoom(p, radius, height, dirt_mode, decorations_mode)
 	local y_bottom = p.y
 	local y_top = y_bottom + height + 1
 	dirt_room_coords = {
@@ -321,7 +323,18 @@ local function DirtRoom(p, radius, height, dirt_mode)
 						end
 					end
 				else
-					built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, {name="air"})
+					if yi == y_bottom + 1 then
+						-- crazy rails
+						if decorations_mode == 1 then
+							local r = pr_deco:next(1,3)
+							if r == 2 then
+								built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, {name=tsm_railcorridors.nodes.rail})
+							end
+						end
+					end
+					if not built then
+						built = SetNodeIfCanBuild({x=xi,y=yi,z=zi}, {name="air"})
+					end
 				end
 				if not built then
 					built_all = false
@@ -981,10 +994,16 @@ local function create_corridor_system(main_cave_coords)
 		floor_diff = 0
 	end
 	local dirt_mode = pr:next(1,2)
+	local rnd = pr:next(1,1000)
+	-- Small chance to fill dirt room with random rails
+	local decorations_mode = 0
+	if rnd == 1000 then
+		decorations_mode = 1
+	end
 
 	--[[ Starting point: A big hollow dirt cube from which the corridors will extend.
 	Corridor generation starts here. ]]
-	DirtRoom(main_cave_coords, size, height, dirt_mode)
+	DirtRoom(main_cave_coords, size, height, dirt_mode, decorations_mode)
 	main_cave_coords.y = main_cave_coords.y + 2 + floor_diff
 
 	-- Determine if this corridor system is “damaged” (some rails removed) and to which extent
