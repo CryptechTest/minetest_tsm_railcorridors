@@ -927,7 +927,7 @@ local function create_corridor_line(waypoint, axis, sign, length, wood, post, da
 		elseif a=="z" then
 			a="x"
 	 	end;
-		s = pr:next(0, 2) < 1
+		s = pr:next(1, 2) == 1
 	end
 end
 
