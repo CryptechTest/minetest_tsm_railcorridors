@@ -964,7 +964,11 @@ end
 local function create_corridor_system(main_cave_coords)
 
 	-- Dirt room size
-	local size = pr:next(3, 9)
+	local maxsize = 7
+	if chaos_mode then
+		maxsize = 9
+	end
+	local size = pr:next(3, maxsize)
 
 	--[[ Only build if starter coords are in the ground.
 	Prevents corridors starting in mid-air or in liquids. ]]
