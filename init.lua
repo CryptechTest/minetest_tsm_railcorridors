@@ -104,6 +104,14 @@ local chaos_mode = minetest.settings:get_bool("tsm_railcorridors_chaos") or fals
 
 -- End of parameters
 
+if not tsm_railcorridors.nodes.corridor_woods_function then
+	local accumulated_chance = 0
+	for w=1, #tsm_railcorridors.nodes.corridor_woods do
+		accumulated_chance = accumulated_chance + tsm_railcorridors.nodes.corridor_woods[w].chance
+	end
+	assert(accumulated_chance == 1000, "Rail corridor wood chances add up to "..accumulated_chance.." per mille! (should be 1000 per mille)")
+end
+
 -- Random Perlin noise generators
 local pr, pr_carts, pr_treasures, pr_deco, webperlin_major, webperlin_minor
 
@@ -1027,10 +1035,6 @@ local function create_corridor_system(main_cave_coords)
 		for w=1, #tsm_railcorridors.nodes.corridor_woods do
 			local woodtable = tsm_railcorridors.nodes.corridor_woods[w]
 			accumulated_chance = accumulated_chance + woodtable.chance
-			if accumulated_chance > 1000 then
-				minetest.log("warning", "[tsm_railcorridors] Warning: Wood chances add up to over 100%!")
-				break
-			end
 			if rnd <= accumulated_chance then
 				woodtype = w
 				break
