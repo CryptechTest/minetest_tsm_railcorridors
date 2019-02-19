@@ -1050,7 +1050,7 @@ local function create_corridor_system(main_cave_coords)
 		post = tsm_railcorridors.nodes.corridor_woods[woodtype].post
 	end
 
-	-- Start 2-5 corridors in each direction
+	-- Start 2-4 corridors in each direction
 	local dirs = {
 		{axis="x", axis2="z", sign=false},
 		{axis="x", axis2="z", sign=true},
@@ -1064,7 +1064,8 @@ local function create_corridor_system(main_cave_coords)
 			corridors = corridors + 1
 		end
 	end
-	if size > 4 then
+	-- Chance for 5th corridor in Chaos Mode
+	if chaos_mode and size > 4 then
 		if pr:next(0,100) < 50 then
 			corridors = corridors + 1
 		end
