@@ -204,14 +204,17 @@ local function NeedsPlatform(pos)
 	local node = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z})
 	local node2 = minetest.get_node({x=pos.x,y=pos.y-2,z=pos.z})
 	local nodedef = minetest.registered_nodes[node.name]
+	local falling = minetest.get_item_group(node.name, "falling_node") == 1
 	return
 		-- Node can be replaced if ground content or rail
 		(node.name ~= "ignore" and node.name ~= "unknown" and nodedef.is_ground_content) and
 		-- Node needs platform if node below is not walkable.
 		-- Unless 2 nodes below there is dirt: This is a special case for the starter cube.
 		((nodedef.walkable == false and node2.name ~= tsm_railcorridors.nodes.dirt) or
-		-- Falling nodes alway need to be replaced by a platform, we want a solid and safe ground
-		(nodedef.groups and nodedef.groups.falling_node))
+		-- Falling nodes always need to be replaced by a platform, we want a solid and safe ground
+		falling),
+		-- second return value
+		falling
 end
 
 -- Create a cube filled with the specified nodes
@@ -352,12 +355,20 @@ local function DirtRoom(p, radius, height, dirt_mode, decorations_mode)
 	return built_all
 end
 
-local function Platform(p, radius, node)
+local function Platform(p, radius, node, node2)
+	-- node2 is secondary platform material for replacing falling nodes
+	if not node2 then
+		node2 = { name = tsm_railcorridors.nodes.dirt }
+	end
 	for zi = p.z-radius, p.z+radius do
 		for xi = p.x-radius, p.x+radius do
-			local np = NeedsPlatform({x=xi,y=p.y,z=zi})
+			local np, np2 = NeedsPlatform({x=xi,y=p.y,z=zi})
 			if np then
-				minetest.set_node({x=xi,y=p.y-1,z=zi}, node)
+				if np2 then
+					minetest.set_node({x=xi,y=p.y-1,z=zi}, node2)
+				else
+					minetest.set_node({x=xi,y=p.y-1,z=zi}, node)
+				end
 			end
 		end
 	end
