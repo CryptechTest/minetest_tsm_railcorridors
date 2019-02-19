@@ -145,3 +145,11 @@ function tsm_railcorridors.get_default_treasure(pr)
 	end
 end
 
+-- Alternative treasure fallback function. This function is called
+-- to return ALL treasures of a single chest at all. It must return
+-- a table of items. If this function is defined, get_default_treasure
+-- is ignored.
+-- Syntax:
+-- tsm_railcorridors.get_treasures = function(pr)
+-- Not used by default.
+tsm_railcorridors.get_treasures = nil

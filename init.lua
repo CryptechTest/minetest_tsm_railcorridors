@@ -3,6 +3,8 @@ tsm_railcorridors = {}
 -- Load node names
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/gameconfig.lua")
 
+local treasurer_supported = minetest.get_modpath("treasurer") ~= nil
+
 -- Settings
 local setting
 
@@ -374,10 +376,8 @@ local function Platform(p, radius, node, node2)
 	end
 end
 
-
--- Random chest items
-local function rci()
-	if(minetest.get_modpath("treasurer") ~= nil) then
+local function RandomChestItem()
+	if treasurer_supported then
 		local treasures
 		if pr_treasures:next(0,100) < 3 then
 			treasures = treasurer.select_random_treasures(1,2,4)
@@ -418,8 +418,15 @@ local function PlaceChest(pos, param2)
 	if SetNodeIfCanBuild(pos, {name=tsm_railcorridors.nodes.chest, param2=param2}) then
 		local meta = minetest.get_meta(pos)
 		local inv = meta:get_inventory()
-		for i=1, inv:get_size("main") do
-			inv:set_stack("main", i, ItemStack(rci()))
+		if not treasurer_supported and tsm_railcorridors.get_treasures then
+			local items = tsm_railcorridors.get_treasures(pr)
+			for i=1, math.min(#items, inv:get_size("main")) do
+				inv:set_stack("main", i, ItemStack(items[i]))
+			end
+		else
+			for i=1, inv:get_size("main") do
+				inv:set_stack("main", i, ItemStack(RandomChestItem()))
+			end
 		end
 	end
 end
