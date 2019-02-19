@@ -599,6 +599,11 @@ local function dig_corridor_section(start_point, segment_vector, segment_count, 
 				-- Normal 3×3 platform
 				Platform({x=p.x, y=p.y-1, z=p.z}, 1, node_wood)
 			end
+		else
+			-- Sloped bridge
+			Platform({x=p.x-dir[1], y=p.y-2, z=p.z-dir[2]}, 0, node_wood)
+			Platform({x=p.x, y=p.y-2, z=p.z}, 0, node_wood)
+			Platform({x=p.x+dir[1], y=p.y-2, z=p.z+dir[2]}, 0, node_wood)
 		end
 		if segmentindex % 2 == 1 and segment_vector.y == 0 then
 			WoodSupport(p, wood, post, torches, dir, torchdir)
@@ -825,10 +830,11 @@ local function create_corridor_section(waypoint, axis, sign, up_or_down, up_or_d
 		else
 			offset[axis] = offset[axis] + segamount
 			final_point = vector.add(waypoint, offset)
-			-- After going up or down, 1 missing rail piece must be added
-			if IsRailSurface({x=final_point.x,y=final_point.y-2,z=final_point.z}) then
-				PlaceRail({x=final_point.x,y=final_point.y-1,z=final_point.z}, damage)
-			end
+		end
+		-- After going up or down, 1 missing rail piece must be added
+		Platform({x=final_point.x,y=final_point.y-1,z=final_point.z}, 0, {name=wood})
+		if IsRailSurface({x=final_point.x,y=final_point.y-2,z=final_point.z}) then
+			PlaceRail({x=final_point.x,y=final_point.y-1,z=final_point.z}, damage)
 		end
 	end
 	if not corridor_dug then
