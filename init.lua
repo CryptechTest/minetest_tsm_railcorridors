@@ -974,7 +974,7 @@ end
 local function create_corridor_system(main_cave_coords)
 
 	-- Dirt room size
-	local maxsize = 7
+	local maxsize = 6
 	if chaos_mode then
 		maxsize = 9
 	end
