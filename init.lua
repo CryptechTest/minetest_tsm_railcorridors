@@ -250,7 +250,7 @@ local function Cube(p, radius, node, replace_air_only, wood, post)
 					if yi == y_top then
 						local topnode = minetest.get_node({x=xi,y=yi+1,z=zi})
 						local topdef = minetest.registered_nodes[topnode.name]
-						if minetest.get_item_group(topnode.name, "attached_node") ~= 1 and topdef.liquidtype == "none" then
+						if topdef and minetest.get_item_group(topnode.name, "attached_node") ~= 1 and topdef.liquidtype == "none" then
 							ok = true
 						end
 					elseif column_last_attached and yi == column_last_attached - 1 then
