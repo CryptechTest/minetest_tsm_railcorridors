@@ -189,7 +189,7 @@ end
 local function IsGround(pos)
 	local nodename = minetest.get_node(pos).name
 	local nodedef = minetest.registered_nodes[nodename]
-	return nodename ~= "unknown" and nodename ~= "ignore" and nodedef.is_ground_content and nodedef.walkable and nodedef.liquidtype == "none"
+	return nodename ~= "unknown" and nodename ~= "ignore" and nodedef and nodedef.is_ground_content and nodedef.walkable and nodedef.liquidtype == "none"
 end
 
 -- Returns true if rails are allowed to be placed on top of this node
@@ -197,7 +197,7 @@ local function IsRailSurface(pos)
 	local nodename = minetest.get_node(pos).name
 	local nodename_above = minetest.get_node({x=pos.x,y=pos.y+2,z=pos.z}).name
 	local nodedef = minetest.registered_nodes[nodename]
-	return nodename ~= "unknown" and nodename ~= "ignore" and nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular") and nodename_above ~= tsm_railcorridors.nodes.rail
+	return nodename ~= "unknown" and nodename ~= "ignore" and nodedef and nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular") and nodename_above ~= tsm_railcorridors.nodes.rail
 end
 
 -- Checks if the node is empty space which requires to be filled by a platform
@@ -208,7 +208,7 @@ local function NeedsPlatform(pos)
 	local falling = minetest.get_item_group(node.name, "falling_node") == 1
 	return
 		-- Node can be replaced if ground content or rail
-		(node.name ~= "ignore" and node.name ~= "unknown" and nodedef.is_ground_content) and
+		(nodedef and node.name ~= "ignore" and node.name ~= "unknown" and nodedef.is_ground_content) and
 		-- Node needs platform if node below is not walkable.
 		-- Unless 2 nodes below there is dirt: This is a special case for the starter cube.
 		((nodedef.walkable == false and node2.name ~= tsm_railcorridors.nodes.dirt) or
@@ -234,7 +234,7 @@ end
 local function Cube(p, radius, node, replace_air_only, wood, post)
 	local y_top = p.y+radius
 	local nodedef = minetest.registered_nodes[node.name]
-	local solid = nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular") and nodedef.liquidtype == "none"
+	local solid = nodedef and nodedef.walkable and (nodedef.node_box == nil or nodedef.node_box.type == "regular") and nodedef.liquidtype == "none"
 	-- Check if all the nodes could be set
 	local built_all = true
 
@@ -565,12 +565,12 @@ local function WoodSupport(p, wood, post, torches, dir, torchdir)
 		local nodedef1 = minetest.registered_nodes[minetest.get_node(pos1).name]
 		local nodedef2 = minetest.registered_nodes[minetest.get_node(pos2).name]
 
-		if nodedef1.walkable then
+		if nodedef1 and nodedef1.walkable then
 			pos1.y = pos1.y + 1
 		end
 		SetNodeIfCanBuild(pos1, node, true)
 
-		if nodedef2.walkable then
+		if nodedef2 and nodedef2.walkable then
 			pos2.y = pos2.y + 1
 		end
 		SetNodeIfCanBuild(pos2, node, true)
