@@ -150,7 +150,7 @@ local function SetNodeIfCanBuild(pos, node, check_above, can_replace_rail)
 	if check_above then
 		local abovename = minetest.get_node({x=pos.x,y=pos.y+1,z=pos.z}).name
 		local abovedef = minetest.registered_nodes[abovename]
-		if abovename == "unknown" or abovename == "ignore" or
+		if (not abovedef) or abovename == "unknown" or abovename == "ignore" or
 				(abovedef.groups and abovedef.groups.attached_node) or
 				-- This is done because cobwebs are often fake liquids
 				(abovedef.liquidtype ~= "none" and abovename ~= tsm_railcorridors.nodes.cobweb) then
@@ -159,7 +159,7 @@ local function SetNodeIfCanBuild(pos, node, check_above, can_replace_rail)
 	end
 	local name = minetest.get_node(pos).name
 	local def = minetest.registered_nodes[name]
-	if name ~= "unknown" and name ~= "ignore" and
+	if name ~= "unknown" and name ~= "ignore" and def and
 			((def.is_ground_content and def.liquidtype == "none") or
 			name == tsm_railcorridors.nodes.cobweb or
 			name == tsm_railcorridors.nodes.torch_wall or
@@ -274,7 +274,7 @@ local function Cube(p, radius, node, replace_air_only, wood, post)
 						elseif wood and (xi == p.x or zi == p.z) and thisnode.name == wood then
 							local topnode = minetest.get_node({x=xi,y=yi+1,z=zi})
 							local topdef = minetest.registered_nodes[topnode.name]
-							if topdef.walkable and topnode.name ~= wood then
+							if topdef and topdef.walkable and topnode.name ~= wood then
 								minetest.set_node({x=xi,y=yi,z=zi}, node)
 								-- Check for torches around the wood and schedule them
 								-- for removal
@@ -471,7 +471,7 @@ local function TryPlaceCobweb(pos, needs_check, side_vector)
 			local cpos = vector.add(pos, check_vectors[c])
 			local cname = minetest.get_node(cpos).name
 			local cdef = minetest.registered_nodes[cname]
-			if cname ~= "ignore" and cdef.walkable then
+			if cname ~= "ignore" and cdef and cdef.walkable then
 				check_passed = true
 				break
 			end
