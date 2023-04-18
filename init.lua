@@ -9,7 +9,6 @@ local treasurer_supported = minetest.get_modpath("treasurer") ~= nil
 local setting
 
 -- Probability function
--- TODO: Check if this is correct
 local P = function (float)
 	return math.floor(32767 * float)
 end
