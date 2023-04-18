@@ -430,27 +430,6 @@ local function PlaceChest(pos, param2)
 	end
 end
 
--- This function checks if a cart has ACTUALLY been spawned.
--- To be calld by minetest.after.
--- This is a workaround thanks to the fact that minetest.add_entity is unreliable as fuck
--- See: https://github.com/minetest/minetest/issues/4759
--- FIXME: Kill this horrible hack with fire as soon you can.
-local function RecheckCartHack(params)
-	local pos = params[1]
-	local cart_id = params[2]
-	-- Find cart
-	for _, obj in ipairs(minetest.get_objects_inside_radius(pos, 1)) do
-		if obj ~= nil and obj:get_luaentity().name == cart_id then
-			-- Cart found! We can now safely call the callback func.
-			-- (calling it earlier has the danger of failing)
-			minetest.log("info", "[tsm_railcorridors] Cart spawn succeeded: "..minetest.pos_to_string(pos))
-			tsm_railcorridors.on_construct_cart(pos, obj)
-			return
-		end
-	end
-	minetest.log("info", "[tsm_railcorridors] Cart spawn FAILED: "..minetest.pos_to_string(pos))
-end
-
 -- Try to place a cobweb.
 -- pos: Position of cobweb
 -- needs_check: If true, checks if any of the nodes above, below or to the side of the cobweb.
@@ -969,17 +948,30 @@ local function spawn_carts()
 		local cart_type = carts_table[c].cart_type
 		local node = minetest.get_node(cpos)
 		if node.name == tsm_railcorridors.nodes.rail then
-			-- FIXME: The cart sometimes fails to spawn
-			-- See <https://github.com/minetest/minetest/issues/4759>
 			local cart_id = tsm_railcorridors.carts[cart_type]
-			minetest.log("info", "[tsm_railcorridors] Cart spawn attempt: "..minetest.pos_to_string(cpos))
-			minetest.add_entity(cpos, cart_id)
-
-			-- This checks if the cart is actually spawned, it's a giant hack!
-			-- Note that the callback function is also called there.
-			-- TODO: Move callback function to this position when the
-			-- minetest.add_entity bug has been fixed.
-			minetest.after(3, RecheckCartHack, {cpos, cart_id})
+			local cart_emerge = function(blockpos, action, calls_remaining, param)
+				if action ~= minetest.EMERGE_FROM_MEMORY and action ~= minetest.EMERGE_FROM_DISK and action ~= minetest.EMERGE_GENERATED then
+					minetest.log("error", "[tsm_railcorridors] Emerging area for cart failed at: "..minetest.pos_to_string(param.cpos))
+					return
+				end
+				if calls_remaining > 0 then
+					return
+				end
+				minetest.log("info", "[tsm_railcorridors] Area for cart emerged at: "..minetest.pos_to_string(param.cpos))
+				minetest.load_area(vector.subtract(cpos, vector.new(3,3,3)), vector.add(cpos, vector.new(3,3,3)))
+				minetest.log("info", "[tsm_railcorridors] Trying to spawn cart at: "..minetest.pos_to_string(param.cpos))
+				local obj = minetest.add_entity(param.cpos, param.cart_id)
+				if obj and obj:get_luaentity() then
+					tsm_railcorridors.on_construct_cart(param.cpos, obj)
+				else
+					minetest.log("error", "[tsm_railcorridors] Cart did not spawn at: "..minetest.pos_to_string(param.cpos))
+				end
+			end
+			local offset = vector.new(3,3,3)
+			minetest.log("verbose", "[tsm_railcorridors] Emerging area for cart at: "..minetest.pos_to_string(cpos))
+			minetest.emerge_area(vector.subtract(cpos, offset), vector.add(cpos, offset), cart_emerge, {cpos = cpos, cart_id = cart_id})
+		else
+			minetest.log("error", "[tsm_railcorridors] No rail at: "..minetest.pos_to_string(cpos))
 		end
 	end
 	carts_table = {}
